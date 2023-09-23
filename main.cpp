@@ -4,29 +4,50 @@
 #include <vector>
 using namespace std;
 
+void carregarValores(string, vector<vector<int>> &, int *, int *, vector<int> &, int);
 void salvarValores(vector<int> &, int, int);
-void reprMatriz(string, vector<vector<int>> &);
-void reprVetor(string, vector<vector<int>> &);
 
 int main()
 {
 
    int N, M;
    N = M = 0;
+   vector<int> grau;
+   vector<vector<int>> grafo;
 
+   carregarValores("text.txt", grafo, &N, &M, grau, 2);
+
+}
+
+void carregarValores(string path, vector<vector<int>> &grafo, int *N, int *M, vector<int> &grau, int repr)
+{
+
+   // Repr = 1 -> Representação em matriz de adjacência
+   // Repr = 2 -> Representação em vetor de adjacência
    string str;
-   // Abrindo um arquivo em modo de leitura
-   ifstream file("text.txt");
+   ifstream file(path);
 
-   // Extraí o caractere no cabeçalho para colocá-lo em N
    getline(file, str);
-   N = stoi(str);
+   *N = stoi(str);
 
-   // Inicializa um array de grau para todos os vértices
-   vector<int> grau(N, 0);
+   for (int i = 0; i < *N; i++)
+      grau.push_back(i);
+
+   for (int i = 0; i < *N; i++)
+      if (repr == 1)
+      {
+         grafo.push_back(vector<int>(*N, 0));
+      }
+      else
+      {
+         grafo.push_back(vector<int>(1, i));
+      }
 
    while (getline(file, str))
    {
+      // Aumenta a contagem de arestas
+      *M += 1;
+
       // Atualiza os graus dos vértices em que a aresta incide
       int valor1 = str[0] - '0';
       int valor2 = str[2] - '0';
@@ -34,23 +55,20 @@ int main()
       grau[valor1 - 1]++;
       grau[valor2 - 1]++;
 
-      M++;
+      if (repr == 1)
+      {
+         grafo[valor1 - 1][valor2 - 1] = 1;
+         grafo[valor2 - 1][valor1 - 1] = 1;
+      }
+      else
+      {
+         grafo[valor1 - 1].push_back(valor2 - 1);
+         grafo[valor2 - 1].push_back(valor1 - 1);
+      }
    }
 
    file.close();
-
-   // salvarValores(grau, N, M);
-
-   // Representar o grafo com uma matriz
-   vector<vector<int>> matriz(N, vector<int>(N, 0));
-   reprMatriz("text.txt", matriz);
-
-   // Representar o grafo com vetor de adjacência
-   vector<vector<int>> vetor(N);
-   reprVetor("text.txt", vetor);
 }
-
-
 
 void salvarValores(vector<int> &valor, int N, int M)
 {
@@ -116,44 +134,3 @@ void salvarValores(vector<int> &valor, int N, int M)
 
    file.close();
 }
-
-void reprMatriz(string path, vector<vector<int>> &M)
-{
-
-   string str;
-   ifstream file(path);
-
-   getline(file, str);
-
-   while (getline(file, str))
-   {
-      int valor1 = str[0] - '0' - 1;
-      int valor2 = str[2] - '0' - 1;
-
-      M[valor1][valor2] = 1;
-      M[valor2][valor1] = 1;
-   }
-
-   file.close();
-}
-
-void reprVetor(string path, vector<vector<int>> &V)
-{
-   string str;
-   ifstream file(path);
-
-   getline(file, str);
-
-   while (getline(file, str))
-   {
-      int valor1 = str[0] - '0' - 1;
-      int valor2 = str[2] - '0' - 1;
-
-      V[valor1].push_back(valor2);
-      V[valor2].push_back(valor1);
-   }
-
-   file.close();
-}
-
-void BFS() {}
