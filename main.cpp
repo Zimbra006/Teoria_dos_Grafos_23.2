@@ -4,43 +4,51 @@
 #include <vector>
 using namespace std;
 
+// Valores usados para referenciar o tipo de representação
+const int MATRIZ = 0; // Matriz de adjacência
+const int VETOR = 1; // Vetor de adjacência
+
+// Declaração das funções usadas
 void carregarValores(string, vector<vector<int>> &, int *, int *, vector<int> &, int);
 void salvarValores(vector<int> &, int, int);
 
 int main()
 {
 
+   // Declaração das variáveis onde serão postos os valores carregados
    int N, M;
-   N = M = 0;
    vector<int> grau;
    vector<vector<int>> grafo;
 
-   carregarValores("text.txt", grafo, &N, &M, grau, 2);
+   carregarValores("text.txt", grafo, &N, &M, grau, MATRIZ);
 
 }
 
 void carregarValores(string path, vector<vector<int>> &grafo, int *N, int *M, vector<int> &grau, int repr)
 {
 
-   // Repr = 1 -> Representação em matriz de adjacência
-   // Repr = 2 -> Representação em vetor de adjacência
    string str;
    ifstream file(path);
 
+   // Extraí o cabeçalho contendo o número de vértices
    getline(file, str);
    *N = stoi(str);
 
+   // Atualiza o vetor grau para conter N elementos
    for (int i = 0; i < *N; i++)
       grau.push_back(i);
 
+   // Atualiza o vetor grafo com base na sua representação
    for (int i = 0; i < *N; i++)
-      if (repr == 1)
+      if (repr == MATRIZ)
       {
+         // Caso seja de matriz, adiciona um vetor inteiro só de 0's
          grafo.push_back(vector<int>(*N, 0));
       }
       else
       {
-         grafo.push_back(vector<int>(1, i));
+         // Caso seja de vetor, adiciona um vetor vazio
+         grafo.push_back(vector<int>(0));
       }
 
    while (getline(file, str))
@@ -55,7 +63,8 @@ void carregarValores(string path, vector<vector<int>> &grafo, int *N, int *M, ve
       grau[valor1 - 1]++;
       grau[valor2 - 1]++;
 
-      if (repr == 1)
+      // Atualiza a representação do grafo
+      if (repr == MATRIZ)
       {
          grafo[valor1 - 1][valor2 - 1] = 1;
          grafo[valor2 - 1][valor1 - 1] = 1;
@@ -123,6 +132,7 @@ void salvarValores(vector<int> &valor, int N, int M)
       mean = (vec_aux[N / 2 - 1] + vec_aux[N / 2]) / 2;
    }
 
+   // Escreve esses valores em um arquivo de texto
    ofstream file("valores.txt");
 
    file << "Número de vértices: " << to_string(N) << endl;
@@ -134,3 +144,5 @@ void salvarValores(vector<int> &valor, int N, int M)
 
    file.close();
 }
+
+void BFS(){}
