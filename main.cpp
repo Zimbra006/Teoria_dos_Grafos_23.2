@@ -2,15 +2,17 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <queue>
 using namespace std;
 
 // Valores usados para referenciar o tipo de representação
 const int MATRIZ = 0; // Matriz de adjacência
-const int VETOR = 1; // Vetor de adjacência
+const int VETOR = 1;  // Vetor de adjacência
 
 // Declaração das funções usadas
-void carregarValores(string, vector<vector<int>> &, int *, int *, vector<int> &, int);
-void salvarValores(vector<int> &, int, int);
+void carregarValores(string path, vector<vector<int>> &grafo, int *N, int *M, vector<int> &grau, int repr);
+void salvarValores(vector<int> &valor, int N, int M);
+void BFS(vector<vector<int>> &grafo, int comeco, int N, int repr);
 
 int main()
 {
@@ -20,8 +22,23 @@ int main()
    vector<int> grau;
    vector<vector<int>> grafo;
 
-   carregarValores("text.txt", grafo, &N, &M, grau, MATRIZ);
+   // Define a representação que será utilizada
+   int repr = MATRIZ;
 
+   carregarValores("text.txt", grafo, &N, &M, grau, repr);
+   BFS(grafo, 1, N, repr);
+
+   // Descomente para printar a representação
+   // for (int i = 0; i < N; i++)
+   // {
+   //    int len = grafo[i].size();
+   //    for (int j = 0; j < len; j++)
+   //    {
+   //       cout << grafo[i][j] << " ";
+   //    }
+   //    cout << endl;
+   // }
+   
 }
 
 void carregarValores(string path, vector<vector<int>> &grafo, int *N, int *M, vector<int> &grau, int repr)
@@ -145,4 +162,91 @@ void salvarValores(vector<int> &valor, int N, int M)
    file.close();
 }
 
-void BFS(){}
+void BFS(vector<vector<int>> &grafo, int comeco, int N, int repr)
+{
+   // Trata o começo
+   int comecoReal = comeco - 1;
+
+   // Inicializa o vetor de marcação de vértices
+   vector<bool> visitado(N, false);
+
+   // Inicializa o vetor que indica quem é pai de quem
+   // O valor de -1 indica que não tem pai, ou seja, é a raiz
+   // -1 vai ficar marcado como 0 no arquivo de saída
+   vector<int> pai(N, -1);
+
+   // Inicializa o vetor de nível da árvore
+   vector<int> nivel(N, 0);
+
+   // Marca o vértice inicial como visitado
+   visitado[comecoReal] = true;
+
+   // Inicializa a fila
+   queue<int> fila;
+   fila.push(comecoReal);
+
+   while (!fila.empty())
+   {
+      // Extrai o próximo vértice a ser analisado e retira ele da fila
+      int verticeAtual = fila.front();
+      fila.pop();
+
+
+      // Percorre os vizinhos do vértice atual
+      int len = grafo[verticeAtual].size();
+      for (int i = 0; i < len; i++)
+      {
+         if (repr == MATRIZ)
+         {
+            // Pula se não houver aresta conectando o vértice atual ao vértice i
+            if (!grafo[verticeAtual][i])
+               continue;
+            // Se i não foi visitado
+            if (!visitado[i])
+            {
+               // Marcar como visitado e adicioná-lo à fila
+               visitado[i] = true;
+               fila.push(i);
+
+               // Marca quem é o pai do vértice adicionado como o vértice atual
+               pai[i] = verticeAtual;
+
+               // Marca o nível do vértice adicionado
+               nivel[i] = nivel[verticeAtual] + 1;
+            }
+         }
+         else
+         {
+            // Extraí o vértice sendo visto agora
+            int verticeVisto = grafo[verticeAtual][i];
+            // Se o vértice visto não foi visitado
+            if (!visitado[verticeVisto])
+            {
+               // Marcar como visitado e adicioná-lo à fila
+               visitado[verticeVisto] = true;
+               fila.push(verticeVisto);
+
+               // Marca quem é o pai do vértice adicionado como o vértice atual
+               pai[verticeVisto] = verticeAtual;
+
+               // Marca o nível do vértice adicionado
+               nivel[verticeVisto] = nivel[verticeAtual] + 1;
+            }
+         }
+      }
+   }
+
+   // Salva as informações em um arquivo
+   ofstream file("BFS.txt");
+
+   file << "Vértice / Nível / Pai" << endl;
+
+   for (int i = 0; i < N; i++)
+   {
+      file << i + 1 << " / ";
+      file << nivel[i] << " / ";
+      file << pai[i] + 1 << endl;
+   }
+
+   file.close();
+}
