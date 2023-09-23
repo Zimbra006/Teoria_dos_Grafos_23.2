@@ -1,10 +1,12 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
 using namespace std;
 
-void salvarValores(int *, int, int);
-void reprMatriz(int *, int, string);
+void salvarValores(vector<int> &, int, int);
+void reprMatriz(string, vector<vector<int>> &);
+void reprVetor(string, vector<vector<int>> &);
 
 int main()
 {
@@ -21,8 +23,7 @@ int main()
    N = stoi(str);
 
    // Inicializa um array de grau para todos os vértices
-   int grau[N];
-   fill_n(grau, N, 0);
+   vector<int> grau(N, 0);
 
    while (getline(file, str))
    {
@@ -41,11 +42,17 @@ int main()
    // salvarValores(grau, N, M);
 
    // Representar o grafo com uma matriz
-   int matriz[N][N];
-   reprMatriz((int *)matriz, N, "text.txt");
+   vector<vector<int>> matriz(N, vector<int>(N, 0));
+   reprMatriz("text.txt", matriz);
+
+   // Representar o grafo com vetor de adjacência
+   vector<vector<int>> vetor(N);
+   reprVetor("text.txt", vetor);
 }
 
-void salvarValores(int *valor, int N, int M)
+
+
+void salvarValores(vector<int> &valor, int N, int M)
 {
    // Encontra os valores mínimo e máximo
    // Além do valor médio
@@ -110,7 +117,7 @@ void salvarValores(int *valor, int N, int M)
    file.close();
 }
 
-void reprMatriz(int *M, int N, string path)
+void reprMatriz(string path, vector<vector<int>> &M)
 {
 
    string str;
@@ -118,31 +125,35 @@ void reprMatriz(int *M, int N, string path)
 
    getline(file, str);
 
-   for (int i = 0; i < N; i++)
-      for (int j = 0; j < N; j++)
-         *((M + i * N) + j) = 0;
-
    while (getline(file, str))
    {
-      int valor1 = str[0] - '0';
-      int valor2 = str[2] - '0';
+      int valor1 = str[0] - '0' - 1;
+      int valor2 = str[2] - '0' - 1;
 
-      *((M + (valor1 - 1) * N) + valor2 - 1) = 1;
-      *((M + (valor2 - 1) * N) + valor1 - 1) = 1;
+      M[valor1][valor2] = 1;
+      M[valor2][valor1] = 1;
    }
 
    file.close();
 }
 
-void reprVetor(int *M, int N, string path, int grau[])
+void reprVetor(string path, vector<vector<int>> &V)
 {
    string str;
    ifstream file(path);
 
    getline(file, str);
 
-   int i;
-   int vetorVertice[N];
+   while (getline(file, str))
+   {
+      int valor1 = str[0] - '0' - 1;
+      int valor2 = str[2] - '0' - 1;
 
-   file.close();   
+      V[valor1].push_back(valor2);
+      V[valor2].push_back(valor1);
+   }
+
+   file.close();
 }
+
+void BFS() {}
