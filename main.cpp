@@ -15,6 +15,7 @@ void carregarValores(string path, vector<vector<int>> &grafo, int *N, int *M, ve
 void salvarValores(vector<int> &valor, int N, int M);
 void BFS(vector<vector<int>> &grafo, int comeco, int N, int repr);
 void DFS(vector<vector<int>> &grafo, int comeco, int N, int repr);
+void dist(vector<vector<int>> &grafo, int vertice1, int vertice2, int repr);
 
 int main()
 {
@@ -29,9 +30,6 @@ int main()
 
    // Carrega os valores do grafo com base no arquivo texto
    carregarValores("text.txt", grafo, &N, &M, grau, repr);
-
-   // Realiza a busca
-   BFS(grafo, 1, N, repr);
 
    // Descomente para printar a representação
    // for (int i = 0; i < N; i++)
@@ -347,3 +345,28 @@ void DFS(vector<vector<int>> &grafo, int comeco, int N, int repr)
 
    file.close();
 }
+
+void dist(vector<vector<int>> &grafo, int vertice1, int vertice2, int repr)
+{
+   // Encontra a distância entre dois vértices quaisquer
+
+   // Realiza a BFS
+   BFS(grafo, vertice1, grafo.size(), repr);
+
+   // Busca a linha correta no arquivo texto gerado
+   string str;
+   ifstream file("BFS.txt");
+
+   for (int i = 0; i <= vertice2; i++)
+   {
+      getline(file, str);
+   }
+
+   cout << "A distância entre esses vértices é " << str[4] << endl;
+
+   file.close();
+}
+
+void maxDist(){}
+
+void CC(){}
