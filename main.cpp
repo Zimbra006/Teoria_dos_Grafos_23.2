@@ -16,6 +16,7 @@ void salvarValores(vector<int> &valor, int N, int M);
 void BFS(vector<vector<int>> &grafo, int comeco, int N, int repr);
 void DFS(vector<vector<int>> &grafo, int comeco, int N, int repr);
 void dist(vector<vector<int>> &grafo, int vertice1, int vertice2, int repr);
+void maxDist(vector<vector<int>> &grafo, int repr);
 
 int main()
 {
@@ -30,6 +31,7 @@ int main()
 
    // Carrega os valores do grafo com base no arquivo texto
    carregarValores("text.txt", grafo, &N, &M, grau, repr);
+   maxDist(grafo, repr);
 
    // Descomente para printar a representação
    // for (int i = 0; i < N; i++)
@@ -41,7 +43,6 @@ int main()
    //    }
    //    cout << endl;
    // }
-   
 }
 
 void carregarValores(string path, vector<vector<int>> &grafo, int *N, int *M, vector<int> &grau, int repr)
@@ -194,7 +195,6 @@ void BFS(vector<vector<int>> &grafo, int comeco, int N, int repr)
       int verticeAtual = fila.front();
       fila.pop();
 
-
       // Percorre os vizinhos do vértice atual
       int len = grafo[verticeAtual].size();
       for (int i = 0; i < len; i++)
@@ -282,7 +282,7 @@ void DFS(vector<vector<int>> &grafo, int comeco, int N, int repr)
 
       // Analisa só vértices não marcados, pois os vértices podem se repetir na pilha
       if (!visitado[verticeAtual])
-      {  
+      {
          // Marca o vértice atual
          visitado[verticeAtual] = true;
 
@@ -295,7 +295,7 @@ void DFS(vector<vector<int>> &grafo, int comeco, int N, int repr)
                // Pula se não houver aresta conectando o vértice atual ao vértice i
                if (!grafo[verticeAtual][i])
                   continue;
-               
+
                // Adiciona o vizinho à pilha
                pilha.push(i);
 
@@ -367,6 +367,119 @@ void dist(vector<vector<int>> &grafo, int vertice1, int vertice2, int repr)
    file.close();
 }
 
-void maxDist(){}
+void maxDist(vector<vector<int>> &grafo, int repr)
+{
+   // Encontra o diâmetro do grafo
 
-void CC(){}
+   // Começamos realizando uma BFS a partir de um vértice qualquer
+   BFS(grafo, 1, grafo.size(), repr);
+
+   // Encontramos o vértice mais distante desse
+   string str;
+   ifstream file1("BFS.txt");
+
+   int maxDist = 0;        // Armazena a distância máxima
+   int maxVertice1, maxVertice2; // Armazena o vértice mais distante
+   maxVertice1 = maxVertice2 = 0;
+
+   getline(file1, str); // Pulamos o cabeçalho
+
+   while (getline(file1, str))
+   {
+      // Separa os valores do vértice e da ordem na linha atual
+      string temp;
+      int tempVertice, tempDist;
+      int valor = 0;
+      int caractere = 0;
+
+      while (valor < 2)
+      {
+         if (str[caractere] != '/')
+         {
+            temp += str[caractere];
+         }
+         else
+         {
+            if (valor == 0)
+            {
+               // Extraí o vértice
+               tempVertice = stoi(temp);
+            }
+            else
+            {
+               // Extraí a ordem
+               tempDist = stoi(temp);
+            }
+            valor++;
+            temp.clear();
+         }
+         caractere++;
+      }
+
+      // Compara com os valores armazenados
+      if (tempDist > maxDist)
+      {
+         maxDist = tempDist;
+         maxVertice1 = tempVertice;
+      }
+      
+   }
+
+   file1.close();
+
+   // Agora, realizamos outra BFS para achar a maior distância a partir desse novo vértice
+   BFS(grafo, maxVertice1, grafo.size(), repr);
+
+   // Repetimos o processo para achar o diâmetro do grafo
+   ifstream file2("BFS.txt");
+   
+   maxDist = 0;
+
+   getline(file2, str);
+
+   while (getline(file2, str))
+   {
+      // Separa os valores do vértice e da ordem na linha atual
+      string temp;
+      int tempVertice, tempDist;
+      int valor = 0;
+      int caractere = 0;
+
+      while (valor < 2)
+      {
+         if (str[caractere] != '/')
+         {
+            temp += str[caractere];
+         }
+         else
+         {
+            if (valor == 0)
+            {
+               // Extraí o vértice
+               tempVertice = stoi(temp);
+            }
+            else
+            {
+               // Extraí a ordem
+               tempDist = stoi(temp);
+            }
+            valor++;
+            temp.clear();
+         }
+         caractere++;
+      }
+
+      // Compara com os valores armazenados
+      if (tempDist > maxDist)
+      {
+         maxDist = tempDist;
+         maxVertice2 = tempVertice;
+      }
+   }
+
+   // Imprimi os achados
+   cout << "O diâmetro do grafo é " << maxDist << endl;
+   cout << "Entre os vértices " << maxVertice1 << " e " << maxVertice2 << endl;
+}
+
+void CC() {}
