@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <queue>
+#include <stack>
 using namespace std;
 
 // Valores usados para referenciar o tipo de representação
@@ -13,6 +14,7 @@ const int VETOR = 1;  // Vetor de adjacência
 void carregarValores(string path, vector<vector<int>> &grafo, int *N, int *M, vector<int> &grau, int repr);
 void salvarValores(vector<int> &valor, int N, int M);
 void BFS(vector<vector<int>> &grafo, int comeco, int N, int repr);
+void DFS(vector<vector<int>> &grafo, int comeco, int N, int repr);
 
 int main()
 {
@@ -25,7 +27,10 @@ int main()
    // Define a representação que será utilizada
    int repr = MATRIZ;
 
+   // Carrega os valores do grafo com base no arquivo texto
    carregarValores("text.txt", grafo, &N, &M, grau, repr);
+
+   // Realiza a busca
    BFS(grafo, 1, N, repr);
 
    // Descomente para printar a representação
@@ -165,7 +170,7 @@ void salvarValores(vector<int> &valor, int N, int M)
 void BFS(vector<vector<int>> &grafo, int comeco, int N, int repr)
 {
    // Trata o começo
-   int comecoReal = comeco - 1;
+   int raiz = comeco - 1;
 
    // Inicializa o vetor de marcação de vértices
    vector<bool> visitado(N, false);
@@ -179,11 +184,11 @@ void BFS(vector<vector<int>> &grafo, int comeco, int N, int repr)
    vector<int> nivel(N, 0);
 
    // Marca o vértice inicial como visitado
-   visitado[comecoReal] = true;
+   visitado[raiz] = true;
 
    // Inicializa a fila
    queue<int> fila;
-   fila.push(comecoReal);
+   fila.push(raiz);
 
    while (!fila.empty())
    {
@@ -238,6 +243,98 @@ void BFS(vector<vector<int>> &grafo, int comeco, int N, int repr)
 
    // Salva as informações em um arquivo
    ofstream file("BFS.txt");
+
+   file << "Vértice / Nível / Pai" << endl;
+
+   for (int i = 0; i < N; i++)
+   {
+      file << i + 1 << " / ";
+      file << nivel[i] << " / ";
+      file << pai[i] + 1 << endl;
+   }
+
+   file.close();
+}
+
+void DFS(vector<vector<int>> &grafo, int comeco, int N, int repr)
+{
+   // Trata o começo
+   int raiz = comeco - 1;
+
+   // Inicializa o vetor de marcação de vértices
+   vector<bool> visitado(N, false);
+
+   // Inicializa o vetor que indica quem é pai de quem
+   // O valor de -1 indica que não tem pai, ou seja, é a raiz
+   // -1 vai ficar marcado como 0 no arquivo de saída
+   vector<int> pai(N, -1);
+
+   // Inicializa o vetor de nível da árvore
+   vector<int> nivel(N, 0);
+
+   // Inicializa a pilha
+   stack<int> pilha;
+   pilha.push(raiz);
+
+   while (!pilha.empty())
+   {
+      // Extrai o próximo vértice a ser analisado e retira ele da pilha
+      int verticeAtual = pilha.top();
+      pilha.pop();
+
+      // Analisa só vértices não marcados, pois os vértices podem se repetir na pilha
+      if (!visitado[verticeAtual])
+      {  
+         // Marca o vértice atual
+         visitado[verticeAtual] = true;
+
+         // Percorre os vizinhos do vértice atual
+         int len = grafo[verticeAtual].size();
+         for (int i = 0; i < len; i++)
+         {
+            if (repr == MATRIZ)
+            {
+               // Pula se não houver aresta conectando o vértice atual ao vértice i
+               if (!grafo[verticeAtual][i])
+                  continue;
+               
+               // Adiciona o vizinho à pilha
+               pilha.push(i);
+
+               // Se o vértice ainda não teve o pai marcado, significa que ele
+               // acabou de ser descoberto
+               if (pai[i] == -1)
+               {
+                  pai[i] = verticeAtual;
+                  nivel[i] = nivel[verticeAtual] + 1;
+               }
+            }
+            else
+            {
+               // Extrai o vizinho sendo visto
+               int verticeVisto = grafo[verticeAtual][i];
+
+               // Adiciona o vizinho à pilha
+               pilha.push(verticeVisto);
+
+               // Se o vértice ainda não teve o pai marcado, significa que ele
+               // acabou de ser descoberto
+               if (pai[verticeVisto] == -1)
+               {
+                  pai[verticeVisto] = verticeAtual;
+                  nivel[verticeVisto] = nivel[verticeAtual] + 1;
+               }
+            }
+         }
+      }
+   }
+
+   // Corrige o pai e o nível da raiz
+   pai[raiz] = -1;
+   nivel[raiz] = 0;
+
+   // Salva as informações em um arquivo
+   ofstream file("DFS.txt");
 
    file << "Vértice / Nível / Pai" << endl;
 
