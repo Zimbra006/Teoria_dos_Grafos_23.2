@@ -17,6 +17,7 @@ int BFS(vector<vector<int>> &grafo, int comeco, int N, int repr);
 int DFS(vector<vector<int>> &grafo, int comeco, int N, int repr);
 void dist(vector<vector<int>> &grafo, int vertice1, int vertice2, int repr);
 void diametro(vector<vector<int>> &grafo, int repr);
+void CC(vector<vector<int>> &grafo, int N, int repr);
 
 int main()
 {
@@ -31,7 +32,7 @@ int main()
 
    // Carrega os valores do grafo com base no arquivo texto
    carregarValores("text.txt", grafo, &N, &M, grau, repr);
-   diametro(grafo, repr);
+   CC(grafo, N, repr);
 
    // Descomente para printar a representação
    // for (int i = 0; i < N; i++)
@@ -480,10 +481,149 @@ void diametro(vector<vector<int>> &grafo, int repr)
 
    cout << "O diâmetro do grafo é " << dist << endl;
    cout << "Entre os vértices " << maxVertice1 << " e " << maxVertice2 << endl;
-
 }
 
-void CC(vector<vector<int>> &grafo, int repr)
+void CC(vector<vector<int>> &grafo, int N, int repr)
 {
-   // Encontra (e lista!) as componentes conexas do grafo
+   // Encontra (e lista!) as componentes conexas (CC's) do grafo
+
+   // Armazena a quantidade de CC's no grafo 
+   int num_componentes = 0;
+
+   // Declara um vetor para armazenar as componentes conexas
+   vector<vector<int>> componentes;
+
+   // Inicializa o vetor de marcação de vértices
+   vector<bool> visitado(N, false);
+
+   // Booleana que armazena se todos os vértices foram visitados
+   // Atualizado ao fim de cada iteração
+   bool totalmenteVisitado = false;
+
+   // Guarda a raiz da próxima iteração
+   int raiz = 1;
+
+   // Começa a busca por componentes conexas: uma sequência de buscas em profundidade
+   while (!totalmenteVisitado)
+   {
+      // Atualiza a quantidade de componentes conexas
+      num_componentes++;
+
+      // Adiciona um vetor representando a componente conexa atual
+      componentes.push_back(vector<int>(0));
+
+      // Marca a próxima raiz como visitado
+      visitado[raiz] = true;
+
+      // Inicializa a fila
+      queue<int> fila;
+      fila.push(raiz);
+
+      while (!fila.empty())
+      {
+         // Extrai o próximo vértice a ser analisado e retira ele da fila
+         int verticeAtual = fila.front();
+         fila.pop();
+
+         // Insere o vértice na componente conexa atual
+         componentes[num_componentes - 1].push_back(verticeAtual);
+
+         // Percorre os vizinhos do vértice atual
+         int len = grafo[verticeAtual].size();
+         for (int i = 0; i < len; i++)
+         {
+            if (repr == MATRIZ)
+            {
+               // Pula se não houver aresta conectando o vértice atual ao vértice i
+               if (!grafo[verticeAtual][i])
+                  continue;
+               // Se i não foi visitado
+               if (!visitado[i])
+               {
+                  // Marcar como visitado e adicioná-lo à fila
+                  visitado[i] = true;
+                  fila.push(i);
+               }
+            }
+            else
+            {
+               // Extraí o vértice sendo visto agora
+               int verticeVisto = grafo[verticeAtual][i];
+               // Se o vértice visto não foi visitado
+               if (!visitado[verticeVisto])
+               {
+                  // Marcar como visitado e adicioná-lo à fila
+                  visitado[verticeVisto] = true;
+                  fila.push(verticeVisto);
+               }
+            }
+         }
+      }
+
+      // Assume que todos os vértices foram visitados
+      totalmenteVisitado = true;
+
+      // Agora verifica se todos os vértices foram visitados
+      for (int i = 0; i < N; i++)
+      {
+         if (!visitado[i])
+         {
+            // A próxima BFS começará a partir do primeiro vértice não marcado
+            // que foi encontrado
+            raiz = i;
+            totalmenteVisitado = false;
+            break;
+         }
+      }
+
+      /*
+         Obs.: totalmenteVisitado é posto como true antes do loop pois é uma maneira eficiente
+         de verificar se visitamos todos ou não: se sair do loop continuando verdadeiro, signi-
+         fica que ele não achou um vértice não visitado!
+      */
+
+   }
+
+   // Salva as informações num arquivo texto
+   ofstream file("CC.txt");
+
+   // Coloca a quantidade de CC's no cabeçalho
+   file << num_componentes << endl;
+
+   file << "Tamanho / Lista" << endl;
+
+   // Lista as componentes em ordem decrescente de tamanho
+   while (!componentes.empty())
+   {
+      // Encontra a CC de maior tamanho
+      int maxSize, maxCC;
+      maxSize = maxCC = 0;
+
+      int len = componentes.size();
+      for (int i = 0; i < len; i++)
+      {
+         int tamanhoAtual = componentes[i].size();
+         if (tamanhoAtual > maxSize)
+         {
+            maxSize = tamanhoAtual;
+            maxCC = i;
+         }
+      }
+
+      // Lista ela
+      file << maxSize << " / ";
+      
+      int lenCC = componentes[maxCC].size();
+      for (int i = 0; i < lenCC; i++)
+      {
+         file << componentes[maxCC][i] + 1 << ", ";
+      }
+
+      file << endl;
+
+      // Apaga ela
+      componentes.erase(componentes.begin() + maxCC);
+   }
+   
+   file.close();
 }
