@@ -385,6 +385,14 @@ void dist(vector<vector<int>> &grafo, int vertice1, int vertice2, int repr)
 {
    // Encontra a distância entre dois vértices quaisquer
 
+   // Verifica se os dois vértices são diferentes
+   if (vertice1 == vertice2)
+   {
+      cout << "Por favor, insira vértices distintos" << endl;
+      return;
+   }
+   
+
    // Realiza a BFS
    BFS(grafo, vertice1, grafo.size(), repr);
 
@@ -424,9 +432,16 @@ void dist(vector<vector<int>> &grafo, int vertice1, int vertice2, int repr)
       caractere++;
    }
 
+   file.close();
+
+   if (dist == 0)
+   {
+      cout << "Esses vértices não estão conectados" << endl;
+      return;
+   }
+
    cout << "A distância entre esses vértices é " << dist << endl;
 
-   file.close();
 }
 
 void diametro(vector<vector<int>> &grafo, int repr)
