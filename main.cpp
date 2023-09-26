@@ -32,7 +32,7 @@ int main()
 
    // Carrega os valores do grafo com base no arquivo texto
    carregarValores("text.txt", grafo, &N, &M, grau, repr);
-   CC(grafo, N, repr);
+   salvarValores(grau, N, M);
 
    // Descomente para printar a representação
    // for (int i = 0; i < N; i++)
@@ -58,7 +58,7 @@ void carregarValores(string path, vector<vector<int>> &grafo, int *N, int *M, ve
 
    // Atualiza o vetor grau para conter N elementos
    for (int i = 0; i < *N; i++)
-      grau.push_back(i);
+      grau.push_back(0);
 
    // Atualiza o vetor grafo com base na sua representação
    for (int i = 0; i < *N; i++)
