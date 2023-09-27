@@ -28,22 +28,12 @@ int main()
    vector<vector<int>> grafo;
 
    // Define a representação que será utilizada
-   int repr = MATRIZ;
+   int repr = VETOR;
 
    // Carrega os valores do grafo com base no arquivo texto
-   carregarValores("text.txt", grafo, &N, &M, grau, repr);
-   salvarValores(grau, N, M);
+   carregarValores("grafos\\grafo_6.txt", grafo, &N, &M, grau, repr);
 
-   // Descomente para printar a representação
-   // for (int i = 0; i < N; i++)
-   // {
-   //    int len = grafo[i].size();
-   //    for (int j = 0; j < len; j++)
-   //    {
-   //       cout << grafo[i][j] << " ";
-   //    }
-   //    cout << endl;
-   // }
+   CC(grafo, N, repr);
 }
 
 void carregarValores(string path, vector<vector<int>> &grafo, int *N, int *M, vector<int> &grau, int repr)
@@ -62,6 +52,7 @@ void carregarValores(string path, vector<vector<int>> &grafo, int *N, int *M, ve
 
    // Atualiza o vetor grafo com base na sua representação
    for (int i = 0; i < *N; i++)
+   {
       if (repr == MATRIZ)
       {
          // Caso seja de matriz, adiciona um vetor inteiro só de 0's
@@ -72,6 +63,7 @@ void carregarValores(string path, vector<vector<int>> &grafo, int *N, int *M, ve
          // Caso seja de vetor, adiciona um vetor vazio
          grafo.push_back(vector<int>(0));
       }
+   }
 
    while (getline(file, str))
    {
@@ -79,8 +71,27 @@ void carregarValores(string path, vector<vector<int>> &grafo, int *N, int *M, ve
       *M += 1;
 
       // Atualiza os graus dos vértices em que a aresta incide
-      int valor1 = str[0] - '0';
-      int valor2 = str[2] - '0';
+      int valor1 = 0;
+      int valor2 = 0;
+
+      string temp;
+      int caractere = 0;
+      while (str[caractere] != '\0')
+      {
+         if (str[caractere] != ' ')
+         {
+            // Append the char to the temp string.
+            temp += str[caractere];
+         }
+         else
+         {
+            valor1 = stoi(temp);
+            temp.clear();
+         }
+         caractere++;
+      }
+
+      valor2 = stoi(temp);
 
       grau[valor1 - 1]++;
       grau[valor2 - 1]++;
@@ -391,7 +402,6 @@ void dist(vector<vector<int>> &grafo, int vertice1, int vertice2, int repr)
       cout << "Por favor, insira vértices distintos" << endl;
       return;
    }
-   
 
    // Realiza a BFS
    BFS(grafo, vertice1, grafo.size(), repr);
@@ -441,7 +451,6 @@ void dist(vector<vector<int>> &grafo, int vertice1, int vertice2, int repr)
    }
 
    cout << "A distância entre esses vértices é " << dist << endl;
-
 }
 
 void diametro(vector<vector<int>> &grafo, int repr)
@@ -502,7 +511,7 @@ void CC(vector<vector<int>> &grafo, int N, int repr)
 {
    // Encontra (e lista!) as componentes conexas (CC's) do grafo
 
-   // Armazena a quantidade de CC's no grafo 
+   // Armazena a quantidade de CC's no grafo
    int num_componentes = 0;
 
    // Declara um vetor para armazenar as componentes conexas
@@ -596,7 +605,6 @@ void CC(vector<vector<int>> &grafo, int N, int repr)
          de verificar se visitamos todos ou não: se sair do loop continuando verdadeiro, signi-
          fica que ele não achou um vértice não visitado!
       */
-
    }
 
    // Salva as informações num arquivo texto
@@ -627,7 +635,7 @@ void CC(vector<vector<int>> &grafo, int N, int repr)
 
       // Lista ela
       file << maxSize << " / ";
-      
+
       int lenCC = componentes[maxCC].size();
       for (int i = 0; i < lenCC; i++)
       {
@@ -639,6 +647,6 @@ void CC(vector<vector<int>> &grafo, int N, int repr)
       // Apaga ela
       componentes.erase(componentes.begin() + maxCC);
    }
-   
+
    file.close();
 }
