@@ -4,7 +4,9 @@
 #include <vector>
 #include <queue>
 #include <stack>
+#include <chrono>
 using namespace std;
+using namespace std::chrono;
 
 // Valores usados para referenciar o tipo de representação
 const int MATRIZ = 0; // Matriz de adjacência
@@ -16,7 +18,7 @@ void salvarValores(vector<int> &valor, int N, int M);
 int BFS(vector<vector<int>> &grafo, int comeco, int N, int repr);
 int DFS(vector<vector<int>> &grafo, int comeco, int N, int repr);
 void dist(vector<vector<int>> &grafo, int vertice1, int vertice2, int repr);
-void diametro(vector<vector<int>> &grafo, int repr);
+void diametro(vector<vector<int>> &grafo, int repr, bool aprox);
 void CC(vector<vector<int>> &grafo, int N, int repr);
 
 int main()
@@ -31,9 +33,25 @@ int main()
    int repr = VETOR;
 
    // Carrega os valores do grafo com base no arquivo texto
-   carregarValores("grafos\\grafo_6.txt", grafo, &N, &M, grau, repr);
+   string grafo_analisado = "grafo_6";
+   string caminho = "grafos\\" + grafo_analisado + ".txt";
+   carregarValores(caminho, grafo, &N, &M, grau, repr);
+
+   system("pause");
+
+   // Armazena o tempo inicial
+   auto start = high_resolution_clock::now();
 
    CC(grafo, N, repr);
+   diametro(grafo, repr);
+
+   // Armazena o tempo final
+   auto stop = high_resolution_clock::now();
+
+   // Calcula a duração em milisegundos
+   auto duration = duration_cast<milliseconds>(stop - start);
+
+   cout << grafo_analisado + ": a função levou " << duration.count() << " milisegundos." << endl;
 }
 
 void carregarValores(string path, vector<vector<int>> &grafo, int *N, int *M, vector<int> &grau, int repr)
@@ -453,58 +471,119 @@ void dist(vector<vector<int>> &grafo, int vertice1, int vertice2, int repr)
    cout << "A distância entre esses vértices é " << dist << endl;
 }
 
-void diametro(vector<vector<int>> &grafo, int repr)
+void diametro(vector<vector<int>> &grafo, int repr, bool aprox = false)
 {
    // Encontra o diâmetro do grafo
 
-   // Começamos realizando uma BFS a partir de um vértice qualquer
-   // que vai nos retornar o vértice mais distante desse vértice qualquer
-   int maxVertice1 = BFS(grafo, 1, grafo.size(), repr);
+   // Armazena esse valor para não calcularmos ele múltiplas vezes
+   int len = grafo.size();
 
-   // Agora, realizamos outra BFS a partir desse novo vértice
-   // e achamos o vértice mais distante dele
-   int maxVertice2 = BFS(grafo, maxVertice1, grafo.size(), repr);
-
-   // Busca a linha correta no arquivo texto gerado para achar a distância entre eles
-   string str;
-   ifstream file("BFS.txt");
-
-   for (int i = 0; i <= maxVertice2; i++)
+   if (!aprox) // Algoritmo para encontrar o diâmetro exato
    {
-      getline(file, str);
-   }
-
-   // Separa os valores do vértice e da ordem na linha atual
-   string temp;
-
-   int dist = 0;
-
-   int valor = 0;
-   int caractere = 0;
-
-   while (valor < 2)
-   {
-      if (str[caractere] != '/')
+      int maxDist = 0;
+      for (int i = 0; i < len; i++)
       {
-         temp += str[caractere];
-      }
-      else
-      {
-         if (valor == 1)
+         // Encontra o vértice mais distante do atual
+         int maxVertice = BFS(grafo, i, len, repr);
+
+         // Busca a linha correta no arquivo texto gerado para achar a distância entre eles
+         string str;
+         ifstream file("BFS.txt");
+
+         for (int i = 0; i <= maxVertice; i++)
          {
-            dist = stoi(temp);
+            getline(file, str);
          }
 
-         valor++;
-         temp.clear();
+         // Separa os valores do vértice e da ordem na linha atual
+         string temp;
+
+         int dist = 0;
+
+         int valor = 0;
+         int caractere = 0;
+
+         while (valor < 2)
+         {
+            if (str[caractere] != '/')
+            {
+               temp += str[caractere];
+            }
+            else
+            {
+               if (valor == 1)
+               {
+                  dist = stoi(temp);
+               }
+
+               valor++;
+               temp.clear();
+            }
+            caractere++;
+         }
+
+         file.close();
+
+         if (dist > maxDist)
+         {
+            maxDist = dist;
+         }
       }
-      caractere++;
+
+      cout << "O diâmetro do grafo é " << maxDist << endl;
    }
+   else // Algoritmo para encontrar um valor mínimo para o diâmetro
+   {
 
-   file.close();
+      // Começamos realizando uma BFS a partir de um vértice qualquer
+      // que vai nos retornar o vértice mais distante desse vértice qualquer
+      int maxVertice1 = BFS(grafo, 1, len, repr);
 
-   cout << "O diâmetro do grafo é " << dist << endl;
-   cout << "Entre os vértices " << maxVertice1 << " e " << maxVertice2 << endl;
+      // Agora, realizamos outra BFS a partir desse novo vértice
+      // e achamos o vértice mais distante dele
+      int maxVertice2 = BFS(grafo, maxVertice1, len, repr);
+
+      // Busca a linha correta no arquivo texto gerado para achar a distância entre eles
+      string str;
+      ifstream file("BFS.txt");
+
+      for (int i = 0; i <= maxVertice2; i++)
+      {
+         getline(file, str);
+      }
+
+      // Separa os valores do vértice e da ordem na linha atual
+      string temp;
+
+      int dist = 0;
+
+      int valor = 0;
+      int caractere = 0;
+
+      while (valor < 2)
+      {
+         if (str[caractere] != '/')
+         {
+            temp += str[caractere];
+         }
+         else
+         {
+            if (valor == 1)
+            {
+               dist = stoi(temp);
+            }
+
+            valor++;
+            temp.clear();
+         }
+         caractere++;
+      }
+
+      file.close();
+
+      cout << "O diâmetro do grafo é pelo menos " << dist << endl;
+      cout << "Entre os vértices " << maxVertice1 << " e " << maxVertice2 << endl;
+   }
 }
 
 void CC(vector<vector<int>> &grafo, int N, int repr)
