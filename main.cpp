@@ -33,17 +33,15 @@ int main()
    int repr = VETOR;
 
    // Carrega os valores do grafo com base no arquivo texto
-   string grafo_analisado = "grafo_6";
+   string grafo_analisado = "grafo_4";
    string caminho = "grafos\\" + grafo_analisado + ".txt";
    carregarValores(caminho, grafo, &N, &M, grau, repr);
-
-   system("pause");
 
    // Armazena o tempo inicial
    auto start = high_resolution_clock::now();
 
    CC(grafo, N, repr);
-   diametro(grafo, repr);
+   diametro(grafo, repr, false);
 
    // Armazena o tempo final
    auto stop = high_resolution_clock::now();
@@ -471,7 +469,7 @@ void dist(vector<vector<int>> &grafo, int vertice1, int vertice2, int repr)
    cout << "A distância entre esses vértices é " << dist << endl;
 }
 
-void diametro(vector<vector<int>> &grafo, int repr, bool aprox = false)
+void diametro(vector<vector<int>> &grafo, int repr, bool aprox)
 {
    // Encontra o diâmetro do grafo
 
@@ -481,7 +479,7 @@ void diametro(vector<vector<int>> &grafo, int repr, bool aprox = false)
    if (!aprox) // Algoritmo para encontrar o diâmetro exato
    {
       int maxDist = 0;
-      for (int i = 0; i < len; i++)
+      for (int i = 1; i <= len; i++)
       {
          // Encontra o vértice mais distante do atual
          int maxVertice = BFS(grafo, i, len, repr);
@@ -537,7 +535,7 @@ void diametro(vector<vector<int>> &grafo, int repr, bool aprox = false)
 
       // Começamos realizando uma BFS a partir de um vértice qualquer
       // que vai nos retornar o vértice mais distante desse vértice qualquer
-      int maxVertice1 = BFS(grafo, 1, len, repr);
+      int maxVertice1 = BFS(grafo, 2, len, repr);
 
       // Agora, realizamos outra BFS a partir desse novo vértice
       // e achamos o vértice mais distante dele
