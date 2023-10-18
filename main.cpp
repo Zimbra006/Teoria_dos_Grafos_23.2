@@ -18,10 +18,14 @@ int repr = VETOR;
 // Declaração das variáveis onde serão postos os valores carregados
 int N, M;
 vector<int> grau;
-vector<vector<int>> grafo;
+vector<vector<float>> grafo;
+
+// Variável que armazena se o grafo possuí algum peso negativo
+bool pesoNegativo = false;
 
 // Declaração das funções usadas
 void carregarValores(string path);
+void carregarValoresComPesos(string path);
 void salvarValores();
 int BFS(int comeco);
 int DFS(int comeco);
@@ -34,13 +38,37 @@ int main()
 
    // Carrega os valores do grafo com base no arquivo texto
    string grafo_analisado = "grafo_1";
-   string caminho = "grafos\\" + grafo_analisado + ".txt";
-   carregarValores(caminho);
+   // string caminho = "grafos\\" + grafo_analisado + ".txt";
+   string caminho = "text.txt";
+   carregarValoresComPesos(caminho);
 
    // Armazena o tempo inicial
    auto start = high_resolution_clock::now();
 
-   BFS(1);
+   for (int i = 0; i < N; i++)
+   {
+      int len = grafo[i].size() / 2;
+      cout << i + 1 << ":" << endl;
+      for (int j = 0; j < len; j++)
+      {
+         cout << grafo[i][2 * j] + 1 << ": " << grafo[i][2 * j + 1] << endl;
+      }
+      cout << endl;
+   }
+
+   cout << "Peso negativo? ";
+
+   if (pesoNegativo)
+   {
+      cout << "Sim";
+   }
+   else
+   {
+
+      cout << "Não";
+   }
+
+   cout << endl;
 
    // Armazena o tempo final
    auto stop = high_resolution_clock::now();
@@ -53,7 +81,6 @@ int main()
 
 void carregarValores(string path)
 {
-
    string str;
    ifstream file(path);
 
@@ -71,12 +98,12 @@ void carregarValores(string path)
       if (repr == MATRIZ)
       {
          // Caso seja de matriz, adiciona um vetor inteiro só de 0's
-         grafo.push_back(vector<int>(N, 0));
+         grafo.push_back(vector<float>(N, 0));
       }
       else
       {
          // Caso seja de vetor, adiciona um vetor vazio
-         grafo.push_back(vector<int>(0));
+         grafo.push_back(vector<float>(0));
       }
    }
 
@@ -119,8 +146,101 @@ void carregarValores(string path)
       }
       else
       {
-         grafo[valor1 - 1].push_back(valor2 - 1);
-         grafo[valor2 - 1].push_back(valor1 - 1);
+         grafo[valor1 - 1].push_back((float)valor2 - 1);
+         grafo[valor2 - 1].push_back((float)valor1 - 1);
+      }
+   }
+
+   file.close();
+}
+
+void carregarValoresComPesos(string path)
+{
+   string str;
+   ifstream file(path);
+
+   // Extraí o cabeçalho contendo o número de vértices
+   getline(file, str);
+   N = stoi(str);
+
+   // Atualiza o vetor grau para conter N elementos
+   for (int i = 0; i < N; i++)
+      grau.push_back(0);
+
+   // Atualiza o vetor grafo com base na sua representação
+   for (int i = 0; i < N; i++)
+   {
+      if (repr == MATRIZ)
+      {
+         // Caso seja de matriz, adiciona um vetor inteiro com o valor máximo
+         // Usamos o valor máximo para dizer que não possui conexão entre os vértices
+         grafo.push_back(vector<float>(N, __FLT_MAX__));
+      }
+      else
+      {
+         // Caso seja de vetor, adiciona um vetor vazio
+         grafo.push_back(vector<float>(0));
+      }
+   }
+
+   while (getline(file, str))
+   {
+      // Aumenta a contagem de arestas
+      M += 1;
+
+      // Armazena o peso da aresta
+      float peso = 0;
+
+      // Atualiza os graus dos vértices em que a aresta incide
+      int valor1 = 0;
+      int valor2 = 0;
+
+      string temp;
+      int caractere = 0;
+      while (str[caractere] != '\0')
+      {
+         if (str[caractere] != ' ')
+         {
+            // Append the char to the temp string.
+            temp += str[caractere];
+         }
+         else
+         {
+            if (!valor1)
+            {
+               valor1 = stoi(temp);
+            }
+            else
+            {
+               valor2 = stoi(temp);
+            }
+            temp.clear();
+         }
+         caractere++;
+      }
+
+      peso = stof(temp);
+
+      if (peso < 0)
+      {
+         pesoNegativo = true;
+      }
+
+      grau[valor1 - 1]++;
+      grau[valor2 - 1]++;
+
+      // Atualiza a representação do grafo
+      if (repr == MATRIZ)
+      {
+         grafo[valor1 - 1][valor2 - 1] = peso;
+         grafo[valor2 - 1][valor1 - 1] = peso;
+      }
+      else
+      {
+         grafo[valor1 - 1].push_back((float)valor2 - 1);
+         grafo[valor1 - 1].push_back(peso);
+         grafo[valor2 - 1].push_back((float)valor1 - 1);
+         grafo[valor2 - 1].push_back(peso);
       }
    }
 
@@ -251,7 +371,7 @@ int BFS(int comeco)
          else
          {
             // Extraí o vértice sendo visto agora
-            int verticeVisto = grafo[verticeAtual][i];
+            int verticeVisto = (int)grafo[verticeAtual][i];
             // Se o vértice visto não foi visitado
             if (!visitado[verticeVisto])
             {
@@ -357,7 +477,7 @@ int DFS(int comeco)
             else
             {
                // Extrai o vizinho sendo visto
-               int verticeVisto = grafo[verticeAtual][i];
+               int verticeVisto = (int)grafo[verticeAtual][i];
 
                // Adiciona o vizinho à pilha
                pilha.push(verticeVisto);
