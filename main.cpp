@@ -12,35 +12,35 @@ using namespace std::chrono;
 const int MATRIZ = 0; // Matriz de adjacência
 const int VETOR = 1;  // Vetor de adjacência
 
+// Define a representação que será utilizada
+int repr = VETOR;
+
+// Declaração das variáveis onde serão postos os valores carregados
+int N, M;
+vector<int> grau;
+vector<vector<int>> grafo;
+
 // Declaração das funções usadas
-void carregarValores(string path, vector<vector<int>> &grafo, int *N, int *M, vector<int> &grau, int repr);
-void salvarValores(vector<int> &valor, int N, int M);
-int BFS(vector<vector<int>> &grafo, int comeco, int N, int repr);
-int DFS(vector<vector<int>> &grafo, int comeco, int N, int repr);
-void dist(vector<vector<int>> &grafo, int vertice1, int vertice2, int repr);
-void diametro(vector<vector<int>> &grafo, int repr, bool aprox);
-void CC(vector<vector<int>> &grafo, int N, int repr);
+void carregarValores(string path);
+void salvarValores();
+int BFS(int comeco);
+int DFS(int comeco);
+void dist(int vertice1, int vertice2);
+void diametro(bool aprox = false);
+void CC();
 
 int main()
 {
 
-   // Declaração das variáveis onde serão postos os valores carregados
-   int N, M;
-   vector<int> grau;
-   vector<vector<int>> grafo;
-
-   // Define a representação que será utilizada
-   int repr = VETOR;
-
    // Carrega os valores do grafo com base no arquivo texto
-   string grafo_analisado = "grafo_6";
+   string grafo_analisado = "grafo_1";
    string caminho = "grafos\\" + grafo_analisado + ".txt";
-   carregarValores(caminho, grafo, &N, &M, grau, repr);
+   carregarValores(caminho);
 
    // Armazena o tempo inicial
    auto start = high_resolution_clock::now();
 
-   BFS(grafo, 1, N, repr);
+   BFS(1);
 
    // Armazena o tempo final
    auto stop = high_resolution_clock::now();
@@ -51,7 +51,7 @@ int main()
    cout << grafo_analisado + ": a função levou " << duration.count() << " milisegundos." << endl;
 }
 
-void carregarValores(string path, vector<vector<int>> &grafo, int *N, int *M, vector<int> &grau, int repr)
+void carregarValores(string path)
 {
 
    string str;
@@ -59,19 +59,19 @@ void carregarValores(string path, vector<vector<int>> &grafo, int *N, int *M, ve
 
    // Extraí o cabeçalho contendo o número de vértices
    getline(file, str);
-   *N = stoi(str);
+   N = stoi(str);
 
    // Atualiza o vetor grau para conter N elementos
-   for (int i = 0; i < *N; i++)
+   for (int i = 0; i < N; i++)
       grau.push_back(0);
 
    // Atualiza o vetor grafo com base na sua representação
-   for (int i = 0; i < *N; i++)
+   for (int i = 0; i < N; i++)
    {
       if (repr == MATRIZ)
       {
          // Caso seja de matriz, adiciona um vetor inteiro só de 0's
-         grafo.push_back(vector<int>(*N, 0));
+         grafo.push_back(vector<int>(N, 0));
       }
       else
       {
@@ -83,7 +83,7 @@ void carregarValores(string path, vector<vector<int>> &grafo, int *N, int *M, ve
    while (getline(file, str))
    {
       // Aumenta a contagem de arestas
-      *M += 1;
+      M += 1;
 
       // Atualiza os graus dos vértices em que a aresta incide
       int valor1 = 0;
@@ -127,18 +127,18 @@ void carregarValores(string path, vector<vector<int>> &grafo, int *N, int *M, ve
    file.close();
 }
 
-void salvarValores(vector<int> &valor, int N, int M)
+void salvarValores()
 {
    // Encontra os valores mínimo e máximo
    // Além do valor médio
 
-   int max = valor[0];
-   int min = valor[0];
-   float mid = valor[0] / (float)N;
+   int max = grau[0];
+   int min = grau[0];
+   float mid = grau[0] / (float)N;
 
    for (int i = 1; i < N; i++)
    {
-      int val = valor[i];
+      int val = grau[i];
       mid += val / (float)N;
 
       if (val > max)
@@ -153,7 +153,7 @@ void salvarValores(vector<int> &valor, int N, int M)
 
    for (int i = 0; i < N; i++)
    {
-      vec_aux[i] = valor[i];
+      vec_aux[i] = grau[i];
    }
 
    for (int i = 0; i < N - 1; i++)
@@ -193,7 +193,7 @@ void salvarValores(vector<int> &valor, int N, int M)
    file.close();
 }
 
-int BFS(vector<vector<int>> &grafo, int comeco, int N, int repr)
+int BFS(int comeco)
 {
    // Realiza a busca em largura
    // Retorna o vértice mais distante da raiz
@@ -298,7 +298,7 @@ int BFS(vector<vector<int>> &grafo, int comeco, int N, int repr)
    return maxV + 1;
 }
 
-int DFS(vector<vector<int>> &grafo, int comeco, int N, int repr)
+int DFS(int comeco)
 {
    // Realiza a busca em profundidade
    // Retorna o vértice mais distante da raiz
@@ -407,7 +407,7 @@ int DFS(vector<vector<int>> &grafo, int comeco, int N, int repr)
    return maxV + 1;
 }
 
-void dist(vector<vector<int>> &grafo, int vertice1, int vertice2, int repr)
+void dist(int vertice1, int vertice2)
 {
    // Encontra a distância entre dois vértices quaisquer
 
@@ -419,7 +419,7 @@ void dist(vector<vector<int>> &grafo, int vertice1, int vertice2, int repr)
    }
 
    // Realiza a BFS
-   BFS(grafo, vertice1, grafo.size(), repr);
+   BFS(vertice1);
 
    // Busca a linha correta no arquivo texto gerado
    string str;
@@ -468,20 +468,17 @@ void dist(vector<vector<int>> &grafo, int vertice1, int vertice2, int repr)
    cout << "A distância entre esses vértices é " << dist << endl;
 }
 
-void diametro(vector<vector<int>> &grafo, int repr, bool aprox)
+void diametro(bool aprox)
 {
    // Encontra o diâmetro do grafo
-
-   // Armazena esse valor para não calcularmos ele múltiplas vezes
-   int len = grafo.size();
 
    if (!aprox) // Algoritmo para encontrar o diâmetro exato
    {
       int maxDist = 0;
-      for (int i = 1; i <= len; i++)
+      for (int i = 1; i <= N; i++)
       {
          // Encontra o vértice mais distante do atual
-         int maxVertice = BFS(grafo, i, len, repr);
+         int maxVertice = BFS(i);
 
          // Busca a linha correta no arquivo texto gerado para achar a distância entre eles
          string str;
@@ -534,11 +531,11 @@ void diametro(vector<vector<int>> &grafo, int repr, bool aprox)
 
       // Começamos realizando uma BFS a partir de um vértice qualquer
       // que vai nos retornar o vértice mais distante desse vértice qualquer
-      int maxVertice1 = BFS(grafo, 1, len, repr);
+      int maxVertice1 = BFS(1);
 
       // Agora, realizamos outra BFS a partir desse novo vértice
       // e achamos o vértice mais distante dele
-      int maxVertice2 = BFS(grafo, maxVertice1, len, repr);
+      int maxVertice2 = BFS(maxVertice1);
 
       // Busca a linha correta no arquivo texto gerado para achar a distância entre eles
       string str;
@@ -583,7 +580,7 @@ void diametro(vector<vector<int>> &grafo, int repr, bool aprox)
    }
 }
 
-void CC(vector<vector<int>> &grafo, int N, int repr)
+void CC()
 {
    // Encontra (e lista!) as componentes conexas (CC's) do grafo
 
