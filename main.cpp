@@ -5,8 +5,11 @@
 #include <queue>
 #include <stack>
 #include <chrono>
+#include <limits>
 using namespace std;
 using namespace std::chrono;
+
+const int INF = numeric_limits<int>::max(); // Infinito
 
 // Valores usados para referenciar o tipo de representação
 const int MATRIZ = 0; // Matriz de adjacência
@@ -32,6 +35,7 @@ int DFS(int comeco);
 void dist(int vertice1, int vertice2);
 void diametro(bool aprox = false);
 void CC();
+void dijkstra();
 
 int main()
 {
@@ -842,4 +846,99 @@ void CC()
    }
 
    file.close();
+}
+
+void dijkstra(int start)
+{
+   if (pesoNegativo == false)
+   {
+      bool usoHeap = true; //Escolha entre armazenas a estimativa de distância em Heap (TRUE) ou Vetor (FALSE)
+
+      vector<int> dist(N, INF); // Vetor que armazena as distância com todas começando como infinito
+
+      dist[start] = 0; // Define a distância do vértice de início como zero
+
+      vector<bool> visitado(N, false); //Vetor que armazena os vértices que já foram visitados
+
+
+      if (usoHeap) {
+         //Usando Heap para armazenar a estimativa de distância
+
+         priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> minHeap; //Criando heap que armazena o par (distância, vértice) e em que a menor distância está no topo
+         minHeap.push({0, start}); //Adicioando vértice inicial que sempre têm distância zero para si mesmo
+
+         while (!minHeap.empty())
+         {
+            //Retiramos o vértice com a menor distância (o ultimo da fila)
+            int u = minHeap.top().second; 
+            minHeap.pop();
+
+            //Verificamos se ele já foi visitado, se sim, passa para o próximo
+            if (visitado[u])
+            {
+               continue;
+            }
+
+            visitado[u] = true; //Marcamos o vértice como visitado
+
+            for (int v = 0; v < N; v++) 
+            {
+               //Verificamos a existência de um caminho mais curto, se houver atualizamos o valor da distância
+               if (!visitado[v] && grafo[u][v] != INF && dist[u]+ grafo[u][v] < dist[v])
+               {
+                  dist[v] = dist[u] + grafo[u][v];
+                  minHeap.push({dist[v], v});
+               }
+            }
+         }
+      }
+
+      else{
+         //Usando Vetor para armazenar a estimativa de distância
+
+         //Algoritmo executado para todos os vértices (N-1 porque a distância do inicial para ele mesmo é sempre zero)
+         for (int count=0; count < N -1; count++) 
+         {
+            int u = -1; //Inicia como -1 poque ainda não tem vértice selecionado
+
+            //Encontrando o vértice não visitado com a menor distância, armazena-lo em u
+            for  (int j = 0; j < N; j++)
+            {
+               if(!visitado[j] && (u == -1 || dist[j]<dist[u]))
+               {
+                  u=j;
+               }
+            }
+
+            visitado[u] = true; //Marca o vértice u como visitado
+
+            //Atualiza a distância dos visinhos
+            for (int v = 0; v < N; v++)
+            {
+               //Se a distância do início até u mais a distância de u até v for menor que a distância atual do início até v, atualizamos a distância
+               if (!visitado[v] && grafo[u][v] != INF && dist[u] + grafo[u][v] < dist[v])
+               {
+                  dist[v] = dist[u] + grafo[u][v];
+               }
+            }
+         }
+      }
+      // Para quando encontra todas as menores distâncias
+
+      ofstream file("Dijkstra.txt");
+
+      //Arquivo com todas as menores distâncias
+      for (int i = 0; i < N; i++)
+      {
+         file << "Distância de" << start << "até" << i << ":" << dist[i] << endl;
+      }
+
+      file.close();
+   }
+
+   else 
+   {
+      cout << "A biblioteca ainda não implementa caminhos mínimos com pesos negativos" << endl;
+      return;
+   }
 }
