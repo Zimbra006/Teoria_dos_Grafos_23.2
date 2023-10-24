@@ -1,6 +1,0 @@
-Número de vértices: 8
-Número de arestas: 11
-Grau mínimo: 1
-Grau máximo: 5
-Grau médio: 2.750000
-Mediana do grau: 2

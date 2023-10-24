@@ -9,7 +9,113 @@
 using namespace std;
 using namespace std::chrono;
 
-const int INF = numeric_limits<int>::max(); // Infinito
+const float INF = numeric_limits<float>::max(); // Infinito
+
+class MinHeap
+{
+private:
+   vector<pair<float, int>> heap;
+   vector<int> map; // Vetor de mapeamento
+
+   // Função auxiliar para ajustar o heap após a inserção
+   void heapifyUp(int index)
+   {
+      int parent = (index - 1) / 2;
+      while (index > 0 && heap[index].first < heap[parent].first)
+      {
+         map[heap[index].second] = parent;
+         map[heap[parent].second] = index;
+         swap(heap[index], heap[parent]);
+         index = parent;
+         parent = (index - 1) / 2;
+      }
+   }
+
+   // Função auxiliar para ajustar o heap após a remoção
+   void heapifyDown(int index)
+   {
+      int left = 2 * index + 1;
+      int right = 2 * index + 2;
+      int smallest = index;
+
+      if (left < heap.size() && heap[left].first < heap[smallest].first)
+      {
+         smallest = left;
+      }
+      if (right < heap.size() && heap[right].first < heap[smallest].first)
+      {
+         smallest = right;
+      }
+
+      if (smallest != index)
+      {
+         map[heap[index].second] = smallest;
+         map[heap[smallest].second] = index;
+         swap(heap[index], heap[smallest]);
+         heapifyDown(smallest);
+      }
+   }
+
+public:
+   // Inserir um elemento no heap
+   void inserir(float dist, int valor)
+   {
+      heap.push_back({dist, valor});
+      map.push_back(valor);
+      int index = heap.size() - 1;
+      heapifyUp(index);
+   }
+
+   // Remover e retornar o elemento mínimo do heap
+   int pop()
+   {
+      if (heap.empty())
+      {
+         throw out_of_range("Heap is empty");
+      }
+
+      int vertice = heap[0].second;
+      map[vertice] = -1;
+      heap[0] = heap.back();
+      map[heap[0].second] = 0;
+      heap.pop_back();
+      heapifyDown(0);
+
+      return vertice;
+   }
+
+   // Verificar se o heap está vazio
+   bool vazio()
+   {
+      return heap.empty();
+   }
+
+   // Atualiza um valor do heap
+   void atualizar(float novoValor, int indexGrafo)
+   {
+      int indexHeap = map[indexGrafo];
+      heap[indexHeap].first = novoValor;
+
+      int parent = (indexHeap - 1) / 2;
+      if (heap[parent].first > novoValor)
+      {
+         heapifyUp(indexHeap);
+      }
+      else
+      {
+         heapifyDown(indexHeap);
+      }
+   }
+
+   void printMap()
+   {
+      for (int i = 0; i < map.size(); i++)
+      {
+         cout << map[i] << " ";
+      }
+      cout << endl;
+   }
+};
 
 // Valores usados para referenciar o tipo de representação
 const int MATRIZ = 0; // Matriz de adjacência
@@ -35,8 +141,7 @@ int DFS(int comeco);
 void dist(int vertice1, int vertice2);
 void diametro(bool aprox = false);
 void CC();
-void dijkstra(int start, int end);
-void atualizarHeap(priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> minHeap, vector<int> posicaoHeap, int v, int novaDist);
+void dijkstra(int start, int end, bool heap = false);
 
 int main()
 {
@@ -50,30 +155,7 @@ int main()
    // Armazena o tempo inicial
    auto start = high_resolution_clock::now();
 
-   for (int i = 0; i < N; i++)
-   {
-      int len = grafo[i].size() / 2;
-      cout << i + 1 << ":" << endl;
-      for (int j = 0; j < len; j++)
-      {
-         cout << grafo[i][2 * j] + 1 << ": " << grafo[i][2 * j + 1] << endl;
-      }
-      cout << endl;
-   }
-
-   cout << "Peso negativo? ";
-
-   if (pesoNegativo)
-   {
-      cout << "Sim";
-   }
-   else
-   {
-
-      cout << "Não";
-   }
-
-   cout << endl;
+   dijkstra(1, 4);
 
    // Armazena o tempo final
    auto stop = high_resolution_clock::now();
@@ -179,7 +261,7 @@ void carregarValoresComPesos(string path)
       {
          // Caso seja de matriz, adiciona um vetor inteiro com o valor máximo
          // Usamos o valor máximo para dizer que não possui conexão entre os vértices
-         grafo.push_back(vector<float>(N, __FLT_MAX__));
+         grafo.push_back(vector<float>(N, INF));
       }
       else
       {
@@ -849,154 +931,165 @@ void CC()
    file.close();
 }
 
-
-void dijkstra(int start, int end)
+void dijkstra(int start, int end, bool heap)
 {
-   if (pesoNegativo == false)
-   {
-      bool usoHeap = true; //Escolha entre armazenas a estimativa de distância em Heap (TRUE) ou Vetor (FALSE)
 
-      vector<int> dist(N, INF); // Vetor que armazena as distância com todas começando como infinito
-
-      dist[start] = 0; // Define a distância do vértice de início como zero
-
-      vector<bool> visitado(N, false); //Vetor que armazena os vértices que já foram visitados
-
-
-      if (usoHeap) {
-         //Usando Heap para armazenar a estimativa de distância
-
-         vector<int> posicaoHeap(N, -1); // Vetor de mapeamento: saber a posição de cada vértice na Heap
-         
-         priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> minHeap; //Criando heap que armazena o par (distância, vértice) e em que a menor distância está no topo
-         
-         minHeap.push({0, start}); //Adicioando vértice inicial que sempre têm distância zero para si mesmo
-
-         while (!minHeap.empty())
-         {
-            //Retiramos o vértice com a menor distância (o ultimo da fila)
-            int u = minHeap.top().second; 
-            minHeap.pop();
-
-            //Marcar o vértice como visitado
-            if(posicaoHeap[u] != -1)
-            {
-               posicaoHeap[u] = -1;
-            }
-
-            if (u == end) //Se chegarmos no vértice destino para a busca
-            {
-               break;
-            }
-
-            for (int v = 0; v < N; v++) //Atualiza a distância dos visinhos
-            {
-               if (grafo[u][v] != INF)  //Se a distância do início até u mais a distância de u até v for menor que a distância atual do início até v, atualizamos a distância
-               {
-                  int novaDist = dist[u] + grafo[u][v]; //Calcula a nova distância
-
-                  if (novaDist < dist[v]) //Verificamos a existência de um caminho mais curto, se houver atualizamos o valor da distância
-                  {
-                     dist[v] = novaDist; //Atualiza a distância
-
-                     if(posicaoHeap[v] == -1) //Se o vértice não estiver na Heap
-                     {
-                        minHeap.push({dist[v], v}); //Adiciona o vértice com a nova distância
-                        posicaoHeap[v] = v; //Atualiza a posição do vértice na Heap
-                     }
-
-                     else 
-                     {
-                        //Atualiza a distância do vértice
-                        minHeap = atualizarHeap(minHeap, posicaoHeap, v, novaDist);
-                     }
-                  }
-               }
-            }
-         }
-      }
-
-      else{
-         //Usando Vetor para armazenar a estimativa de distância
-
-         //Algoritmo executado para todos os vértices (N-1 porque a distância do inicial para ele mesmo é sempre zero)
-         for (int count=0; count < N -1; count++) 
-         {
-            int u = -1; //Inicia como -1 poque ainda não tem vértice selecionado
-
-            //Encontrando o vértice não visitado com a menor distância, armazena-lo em u
-            for  (int j = 0; j < N; j++)
-            {
-               if(!visitado[j] && (u == -1 || dist[j]<dist[u]))
-               {
-                  u=j;
-               }
-            }
-
-            visitado[u] = true; //Marca o vértice u como visitado
-
-            //Se chegarmos no vértice destino para a busca
-            if (u == end)
-            {
-               break;
-            }
-
-            //Atualiza a distância dos visinhos
-            for (int v = 0; v < N; v++)
-            {
-               //Se a distância do início até u mais a distância de u até v for menor que a distância atual do início até v, atualizamos a distância
-               if (!visitado[v] && grafo[u][v] != INF && dist[u] + grafo[u][v] < dist[v])
-               {
-                  dist[v] = dist[u] + grafo[u][v];
-               }
-            }
-         }
-      }
-      // Para quando encontra todas as menores distâncias
-
-      ofstream file("Dijkstra.txt");
-
-      //Arquivo com a menor distância
-         file << "Distância de" << start << "até" << end << ":" << dist[end] << endl;
-
-      file.close();
-   }
-
-   else 
+   if (pesoNegativo)
    {
       cout << "A biblioteca ainda não implementa caminhos mínimos com pesos negativos" << endl;
       return;
    }
-}
 
-//Função para atualizar a Heap
-priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> atualizarHeap(priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> minHeap, vector<int> posicaoHeap, int v, int novaDist)
-{
-   //Remove o vértice da Heap
-   vector<pair<int, int>> elementos;
-   while (!minHeap.empty()) //Retira todos os elementos da Heap
+   vector<bool> visitado(N, false); // Vetor que armazena os vértices que já foram visitados
+
+   vector<float> dist(N); // Vetor que armazena as distância
+
+   if (heap)
    {
-      pair<int, int> topo = minHeap.top();
-      minHeap.pop(); 
+      MinHeap minHeap;
 
-      //Se o vértice for o que queremos atualizar, paramos de retirar elementos
-      if (topo.second == v)
+      for (int i = 0; i < N; i++)
       {
-         break;
+         dist[i] = INF;
+         minHeap.inserir(INF, i);
       }
-      elementos.push_back(topo); //Adiciona o elemento retirado em um vetor auxiliar
+
+      // Define a distância ao vértice inicial como 0
+      dist[start - 1] = 0;
+      minHeap.atualizar(0, start - 1);
+
+      while (!minHeap.vazio())
+      {
+         for (int i = 0; i < N; i++)
+         {
+            cout << dist[i] << " ";
+         }
+         cout << endl;
+         // Retiramos o vértice com a menor distância (o ultimo da fila)
+         int u = minHeap.pop();
+
+         visitado[u] = true;
+
+         // Atualiza a distância dos vizinhos
+         int len = grafo[u].size();
+         for (int v = 0; v < len; v++)
+         {
+            if (repr == MATRIZ)
+            {
+               if (visitado[v])
+                  continue; // Pula vértices já visitados
+
+               if (dist[v] > dist[u] + grafo[u][v])
+               {
+                  dist[v] = dist[u] + grafo[u][v];
+                  minHeap.atualizar(dist[v], v);
+               }
+            }
+            else
+            {
+               if (v % 2 == 1)
+                  continue; // Pula as vezes que grafo[u][v] é o peso da aresta
+
+               int vertice = grafo[u][v];
+               float peso = grafo[u][v + 1];
+
+               if (visitado[vertice])
+                  continue; // Pula vértices já visitados
+
+               if (dist[vertice] > dist[u] + peso)
+               {
+                  dist[vertice] = dist[u] + peso;
+                  minHeap.atualizar(dist[vertice], vertice);
+               }
+            }
+         }
+
+         if (u == end - 1) // Se chegarmos no vértice destino para a busca
+         {
+            break;
+         }
+      }
    }
-
-   //Atualiza a distância do vértice
-   minHeap.push({novaDist, v}); 
-
-   //Adiciona os elementos retirados de volta na Heap
-   for (const pair<int, int>& elemento: elementos)
+   else
    {
-      minHeap.push(elemento); 
+      // Usando Vetor para armazenar a estimativa de distância
+
+      for (int i = 0; i < N; i++)
+      {
+         dist[i] = INF;
+      }
+
+      dist[start - 1] = 0; // Define a distância do vértice de início como zero
+
+      // Algoritmo executado para todos os vértices (N-1 porque a distância do inicial para ele mesmo é sempre zero)
+      for (int count = 0; count < N - 1; count++)
+      {
+
+         for (int i = 0; i < N; i++)
+         {
+            cout << dist[i] << " ";
+         }
+
+         cout << endl;
+         
+         int u = -1; // Inicia como -1 poque ainda não tem vértice selecionado
+
+         // Encontrando o vértice não visitado com a menor distância, armazena-lo em u
+         for (int j = 0; j < N; j++)
+         {
+            if (!visitado[j] && (u == -1 || dist[j] < dist[u]))
+            {
+               u = j;
+            }
+         }
+
+         visitado[u] = true; // Marca o vértice u como visitado
+
+         // Atualiza a distância dos vizinhos
+         int len = grafo[u].size();
+         for (int v = 0; v < len; v++)
+         {
+            if (repr == MATRIZ)
+            {
+               if (visitado[v])
+                  continue; // Pula vértices já visitados
+
+               if (dist[v] > dist[u] + grafo[u][v])
+               {
+                  dist[v] = dist[u] + grafo[u][v];
+               }
+            }
+            else
+            {
+               if (v % 2 == 1)
+                  continue; // Pula as vezes que grafo[u][v] é igual ao peso da aresta
+
+               int vertice = grafo[u][v];
+               float peso = grafo[u][v + 1];
+
+               if (visitado[vertice])
+                  continue; // Pula vértices já visitados
+
+               if (dist[vertice] > dist[u] + peso)
+               {
+                  dist[vertice] = dist[u] + peso;
+               }
+            }
+         }
+
+         // Se chegarmos no vértice destino para a busca
+         if (u == end - 1)
+         {
+            break;
+         }
+      }
    }
+   // Para quando encontra todas as menores distâncias
 
-   posicaoHeap[v] = v; //Atualiza a posição do vértice na Heap
+   ofstream file("Dijkstra.txt");
 
-   return minHeap;
+   // Arquivo com a menor distância
+   file << "Distância de " << start << " até " << end << ": " << dist[end - 1] << endl;
+
+   file.close();
 }
