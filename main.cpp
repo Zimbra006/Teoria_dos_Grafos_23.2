@@ -35,7 +35,8 @@ int DFS(int comeco);
 void dist(int vertice1, int vertice2);
 void diametro(bool aprox = false);
 void CC();
-void dijkstra();
+void dijkstra(int start, int end);
+void atualizarHeap(priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> minHeap, vector<int> posicaoHeap, int v, int novaDist);
 
 int main()
 {
@@ -848,7 +849,8 @@ void CC()
    file.close();
 }
 
-void dijkstra(int start)
+
+void dijkstra(int start, int end)
 {
    if (pesoNegativo == false)
    {
@@ -864,7 +866,10 @@ void dijkstra(int start)
       if (usoHeap) {
          //Usando Heap para armazenar a estimativa de distância
 
+         vector<int> posicaoHeap(N, -1); // Vetor de mapeamento: saber a posição de cada vértice na Heap
+         
          priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> minHeap; //Criando heap que armazena o par (distância, vértice) e em que a menor distância está no topo
+         
          minHeap.push({0, start}); //Adicioando vértice inicial que sempre têm distância zero para si mesmo
 
          while (!minHeap.empty())
@@ -873,21 +878,39 @@ void dijkstra(int start)
             int u = minHeap.top().second; 
             minHeap.pop();
 
-            //Verificamos se ele já foi visitado, se sim, passa para o próximo
-            if (visitado[u])
+            //Marcar o vértice como visitado
+            if(posicaoHeap[u] != -1)
             {
-               continue;
+               posicaoHeap[u] = -1;
             }
 
-            visitado[u] = true; //Marcamos o vértice como visitado
-
-            for (int v = 0; v < N; v++) 
+            if (u == end) //Se chegarmos no vértice destino para a busca
             {
-               //Verificamos a existência de um caminho mais curto, se houver atualizamos o valor da distância
-               if (!visitado[v] && grafo[u][v] != INF && dist[u]+ grafo[u][v] < dist[v])
+               break;
+            }
+
+            for (int v = 0; v < N; v++) //Atualiza a distância dos visinhos
+            {
+               if (grafo[u][v] != INF)  //Se a distância do início até u mais a distância de u até v for menor que a distância atual do início até v, atualizamos a distância
                {
-                  dist[v] = dist[u] + grafo[u][v];
-                  minHeap.push({dist[v], v});
+                  int novaDist = dist[u] + grafo[u][v]; //Calcula a nova distância
+
+                  if (novaDist < dist[v]) //Verificamos a existência de um caminho mais curto, se houver atualizamos o valor da distância
+                  {
+                     dist[v] = novaDist; //Atualiza a distância
+
+                     if(posicaoHeap[v] == -1) //Se o vértice não estiver na Heap
+                     {
+                        minHeap.push({dist[v], v}); //Adiciona o vértice com a nova distância
+                        posicaoHeap[v] = v; //Atualiza a posição do vértice na Heap
+                     }
+
+                     else 
+                     {
+                        //Atualiza a distância do vértice
+                        minHeap = atualizarHeap(minHeap, posicaoHeap, v, novaDist);
+                     }
+                  }
                }
             }
          }
@@ -912,6 +935,12 @@ void dijkstra(int start)
 
             visitado[u] = true; //Marca o vértice u como visitado
 
+            //Se chegarmos no vértice destino para a busca
+            if (u == end)
+            {
+               break;
+            }
+
             //Atualiza a distância dos visinhos
             for (int v = 0; v < N; v++)
             {
@@ -927,11 +956,8 @@ void dijkstra(int start)
 
       ofstream file("Dijkstra.txt");
 
-      //Arquivo com todas as menores distâncias
-      for (int i = 0; i < N; i++)
-      {
-         file << "Distância de" << start << "até" << i << ":" << dist[i] << endl;
-      }
+      //Arquivo com a menor distância
+         file << "Distância de" << start << "até" << end << ":" << dist[end] << endl;
 
       file.close();
    }
@@ -941,4 +967,36 @@ void dijkstra(int start)
       cout << "A biblioteca ainda não implementa caminhos mínimos com pesos negativos" << endl;
       return;
    }
+}
+
+//Função para atualizar a Heap
+priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> atualizarHeap(priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> minHeap, vector<int> posicaoHeap, int v, int novaDist)
+{
+   //Remove o vértice da Heap
+   vector<pair<int, int>> elementos;
+   while (!minHeap.empty()) //Retira todos os elementos da Heap
+   {
+      pair<int, int> topo = minHeap.top();
+      minHeap.pop(); 
+
+      //Se o vértice for o que queremos atualizar, paramos de retirar elementos
+      if (topo.second == v)
+      {
+         break;
+      }
+      elementos.push_back(topo); //Adiciona o elemento retirado em um vetor auxiliar
+   }
+
+   //Atualiza a distância do vértice
+   minHeap.push({novaDist, v}); 
+
+   //Adiciona os elementos retirados de volta na Heap
+   for (const pair<int, int>& elemento: elementos)
+   {
+      minHeap.push(elemento); 
+   }
+
+   posicaoHeap[v] = v; //Atualiza a posição do vértice na Heap
+
+   return minHeap;
 }
