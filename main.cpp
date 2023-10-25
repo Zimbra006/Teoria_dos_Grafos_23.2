@@ -155,7 +155,7 @@ int main()
    // Armazena o tempo inicial
    auto start = high_resolution_clock::now();
 
-   dijkstra(1, 4);
+   dijkstra(1, 2);
 
    // Armazena o tempo final
    auto stop = high_resolution_clock::now();
@@ -998,11 +998,6 @@ void dijkstra(int start, int end, bool heap)
                }
             }
          }
-
-         if (u == end - 1) // Se chegarmos no vértice destino para a busca
-         {
-            break;
-         }
       }
    }
    else
@@ -1063,20 +1058,20 @@ void dijkstra(int start, int end, bool heap)
                }
             }
          }
-
-         // Se chegarmos no vértice destino para a busca
-         if (u == end - 1)
-         {
-            break;
-         }
       }
    }
    // Para quando encontra todas as menores distâncias
 
-   ofstream file("Dijkstra.txt");
+   cout << "Distância de " << start << " até " << end << ": " << dist[end - 1] << endl;
 
-   // Arquivo com a menor distância
-   file << "Distância de " << start << " até " << end << ": " << dist[end - 1] << endl;
+   ofstream file("Dijkstra_" + to_string(start) + ".txt");
+
+   // Arquivo com a menor distância para todos os vértices
+   for (int i = 0; i < N; i++)
+   {
+      /* code */
+      file << i + 1 << ": " << dist[i] << endl;
+   }
 
    file.close();
 }
