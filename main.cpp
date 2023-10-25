@@ -147,16 +147,14 @@ int main()
 {
 
    // Carrega os valores do grafo com base no arquivo texto
-   string grafo_analisado = "grafo_1";
-   // string caminho = "grafos\\" + grafo_analisado + ".txt";
-   string caminho = "text.txt";
+   string grafo_analisado = "rede_colaboracao";
+   string caminho = "grafos\\" + grafo_analisado + ".txt";
    carregarValoresComPesos(caminho);
 
    // Armazena o tempo inicial
    auto start = high_resolution_clock::now();
 
-   dijkstra(1, 2);
-
+   
    // Armazena o tempo final
    auto stop = high_resolution_clock::now();
 
@@ -942,6 +940,8 @@ void dijkstra(int start, int end, bool heap)
 
    vector<bool> visitado(N, false); // Vetor que armazena os vértices que já foram visitados
 
+   vector<int> pai(N, -1); // Vetor que armazena o pai de cada vértice na busca
+
    vector<float> dist(N); // Vetor que armazena as distância
 
    if (heap)
@@ -978,6 +978,7 @@ void dijkstra(int start, int end, bool heap)
                {
                   dist[v] = dist[u] + grafo[u][v];
                   minHeap.atualizar(dist[v], v);
+                  pai[v] = u;
                }
             }
             else
@@ -995,6 +996,7 @@ void dijkstra(int start, int end, bool heap)
                {
                   dist[vertice] = dist[u] + peso;
                   minHeap.atualizar(dist[vertice], vertice);
+                  pai[vertice] = u;
                }
             }
          }
@@ -1039,6 +1041,7 @@ void dijkstra(int start, int end, bool heap)
                if (dist[v] > dist[u] + grafo[u][v])
                {
                   dist[v] = dist[u] + grafo[u][v];
+                  pai[v] = u;
                }
             }
             else
@@ -1055,6 +1058,7 @@ void dijkstra(int start, int end, bool heap)
                if (dist[vertice] > dist[u] + peso)
                {
                   dist[vertice] = dist[u] + peso;
+                  pai[vertice] = u;
                }
             }
          }
@@ -1066,11 +1070,12 @@ void dijkstra(int start, int end, bool heap)
 
    ofstream file("Dijkstra_" + to_string(start) + ".txt");
 
+   file << "Vértice / Distância / Pai" << endl;
    // Arquivo com a menor distância para todos os vértices
    for (int i = 0; i < N; i++)
    {
       /* code */
-      file << i + 1 << ": " << dist[i] << endl;
+      file << i + 1 << " / " << dist[i] << " / " << pai[i] << endl;
    }
 
    file.close();
