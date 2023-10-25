@@ -960,11 +960,6 @@ void dijkstra(int start, int end, bool heap)
 
       while (!minHeap.vazio())
       {
-         for (int i = 0; i < N; i++)
-         {
-            cout << dist[i] << " ";
-         }
-         cout << endl;
          // Retiramos o vértice com a menor distância (o ultimo da fila)
          int u = minHeap.pop();
 
@@ -1021,17 +1016,9 @@ void dijkstra(int start, int end, bool heap)
 
       dist[start - 1] = 0; // Define a distância do vértice de início como zero
 
-      // Algoritmo executado para todos os vértices (N-1 porque a distância do inicial para ele mesmo é sempre zero)
-      for (int count = 0; count < N - 1; count++)
+      // Algoritmo executado para todos os vértices
+      for (int count = 0; count < N; count++)
       {
-
-         for (int i = 0; i < N; i++)
-         {
-            cout << dist[i] << " ";
-         }
-
-         cout << endl;
-         
          int u = -1; // Inicia como -1 poque ainda não tem vértice selecionado
 
          // Encontrando o vértice não visitado com a menor distância, armazena-lo em u
