@@ -155,7 +155,7 @@ int main()
    auto start = high_resolution_clock::now();
 
    
-   dijkstra(2722, 11365, true);
+   dijkstra(2722, 471365, true);
 
    // Armazena o tempo final
    auto stop = high_resolution_clock::now();
@@ -1069,6 +1069,18 @@ void dijkstra(int start, int end, bool heap)
    // Para quando encontra todas as menores distâncias
 
    cout << "Distância de " << start << " até " << end << ": " << dist[end - 1] << endl;
+
+   cout << "Caminho Mínimo:" << endl;
+
+   int vertice = end;
+   while (vertice != start - 1)
+   {
+      cout << vertice + 1 << endl;
+      vertice = pai[vertice];
+   }
+
+   cout << vertice + 1 << endl;
+   
 
    ofstream file("Dijkstra_" + to_string(start) + ".txt");
 
