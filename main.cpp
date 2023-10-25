@@ -155,6 +155,8 @@ int main()
    auto start = high_resolution_clock::now();
 
    
+   dijkstra(2722, 11365, true);
+
    // Armazena o tempo final
    auto stop = high_resolution_clock::now();
 
@@ -1075,7 +1077,7 @@ void dijkstra(int start, int end, bool heap)
    for (int i = 0; i < N; i++)
    {
       /* code */
-      file << i + 1 << " / " << dist[i] << " / " << pai[i] << endl;
+      file << i + 1 << " / " << dist[i] << " / " << pai[i] + 1 << endl;
    }
 
    file.close();
