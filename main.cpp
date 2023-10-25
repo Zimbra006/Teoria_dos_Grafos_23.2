@@ -1072,7 +1072,7 @@ void dijkstra(int start, int end, bool heap)
 
    cout << "Caminho Mínimo:" << endl;
 
-   int vertice = end;
+   int vertice = end - 1;
    while (vertice != start - 1)
    {
       cout << vertice + 1 << endl;
