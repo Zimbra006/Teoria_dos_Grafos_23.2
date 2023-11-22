@@ -122,7 +122,7 @@ const int MATRIZ = 0; // Matriz de adjacência
 const int VETOR = 1;  // Vetor de adjacência
 
 // Define a representação que será utilizada
-int repr = MATRIZ;
+int repr = VETOR;
 
 // Declaração das variáveis onde serão postos os valores carregados
 int N, M;
@@ -152,14 +152,14 @@ int main()
 {
 
    // Carrega os valores do grafo com base no arquivo texto
-   // string grafo_analisado = "grafo_W_" + to_string(1);
-   string caminho = "text.txt";
+   string grafo_analisado = "grafo_rf_1.txt";
+   string caminho = "grafos\\" + grafo_analisado;
    carregarValoresComPesos(caminho, true);
 
    // Armazena o tempo inicial
    auto start = high_resolution_clock::now();
 
-   ford_fulkerson(1, N);
+   ford_fulkerson(1, 2);
 
    // Armazena o tempo final
    auto stop = high_resolution_clock::now();
@@ -1183,43 +1183,28 @@ float ford_fulkerson(int source, int target)
       caminho = BFS_Ford_Fulkerson(grafo_r, source, target);
    }
 
-   cout << endl << "Fluxo: " << endl;
+   ofstream file("Fluxo.txt");
+
+   file << endl << "Fluxo: " << endl;
 
    for (int i = 0; i < N; i++)
    {
-      cout << i << " ";
+      file << i << " ";
       int len = fluxo[i].size();
       for (int j = 0; j < len; j++)
       {
          if (j % 2 == 0)
          {
-            cout << "| ";
+            file << "| ";
          }
 
-         cout << fluxo[i][j] << " ";
+         file << fluxo[i][j] << " ";
       }
 
-      cout << endl;
+      file << endl;
    }
 
-   cout << "Grafo Residual: " << endl;
-
-   for (int i = 0; i < N; i++)
-   {
-      cout << i << " ";
-      int len = grafo_r[i].size();
-      for (int j = 0; j < len; j++)
-      {
-         if (j % 2 == 0)
-         {
-            cout << "| ";
-         }
-
-         cout << grafo_r[i][j] << " ";
-      }
-
-      cout << endl;
-   }
+   file.close();
 
    // Retornar fluxo máximo
    float fluxoMax = 0;
