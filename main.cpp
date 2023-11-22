@@ -142,32 +142,33 @@ void dist(int vertice1, int vertice2);
 void diametro(bool aprox = false);
 void CC();
 void dijkstra(int start, int end, bool heap = false);
-float ford_fulkerson(int source, int target);
-vector<int> BFS_Ford_Fulkerson(vector<vector<float>> &grafo_r, int source, int target);
-void aumentar_fluxo(vector<vector<float>> &fluxo, vector<vector<float>> &grafo_r, vector<int> &caminho);
-float gargalo(vector<vector<float>> &grafo_r, vector<int> &caminho);
-float capacidade(int i, int j);
+float ford_fulkerson(int source, int target, bool armazenar = false);
+vector<pair<float *, float *>> BFS_Ford_Fulkerson(vector<vector<float>> &grafo_r, int source, int target);
+void aumentar_fluxo(vector<pair<float *, float *>> &caminho);
+float gargalo(vector<pair<float *, float *>> &caminho);
 
 int main()
 {
+   for (int i = 1; i <= 6; i++)
+   {
+      // Carrega os valores do grafo com base no arquivo texto
+      string caminho = "grafos\\grafo_rf_" + to_string(i) + ".txt";
+      carregarValoresComPesos(caminho, true);
 
-   // Carrega os valores do grafo com base no arquivo texto
-   string grafo_analisado = "grafo_rf_1.txt";
-   string caminho = "grafos\\" + grafo_analisado;
-   carregarValoresComPesos(caminho, true);
+      // Armazena o tempo inicial
+      auto start = high_resolution_clock::now();
 
-   // Armazena o tempo inicial
-   auto start = high_resolution_clock::now();
+      ford_fulkerson(1, 2);
 
-   ford_fulkerson(1, 2);
+      // Armazena o tempo final
+      auto stop = high_resolution_clock::now();
 
-   // Armazena o tempo final
-   auto stop = high_resolution_clock::now();
+      // Calcula a duração em segundos
+      auto duration = duration_cast<seconds>(stop - start);
 
-   // Calcula a duração em milisegundos
-   auto duration = duration_cast<milliseconds>(stop - start) / 100.0;
-
-   cout << "A função levou " << duration.count() << " milisegundos." << endl;
+      cout << "Grafo " << i << ": a função levou " << duration.count() << " segundos." << endl;
+   }
+   
 }
 
 void carregarValores(string path)
@@ -1106,114 +1107,108 @@ void dijkstra(int start, int end, bool heap)
    file.close();
 }
 
-float ford_fulkerson(int source, int target)
+float ford_fulkerson(int source, int target, bool armazenar)
 {
-   // Inicializar vetor de fluxo
-   vector<vector<float>> fluxo(N, vector<float>(0));
-
    // Inicializar grafo residual
    vector<vector<float>> grafo_r(N, vector<float>(0));
 
    for (int i = 0; i < N; i++)
    {
-      for (int j = 0; j < N; j++)
-      {  
-         float c = capacidade(i, j);
-         if (c != INF) // Se existir aresta (i,j)
+      int len = grafo[i].size();
+      for (int j = 0; j < len; j++)
+      {
+         // Adicionar aresta original
+         if (repr == MATRIZ)
          {
-            // Atualizar ela com fluxo 0
-            fluxo[i].push_back(j);
-            fluxo[i].push_back(0);
+            if (grafo[i][j] != INF)
+            {
+               grafo_r[i].push_back(j);
+               grafo_r[i].push_back(grafo[i][j]);
+               grafo_r[i].push_back(1); // Sinaliza aresta original
 
-            // Adicionar aresta original
-            grafo_r[i].push_back(j);
-            grafo_r[i].push_back(c);
+               int indiceReciprocaOriginal = grafo_r[j].size() + 1;
+               grafo_r[i].push_back(indiceReciprocaOriginal); // Lembra do índice da capacidade da aresta recíproca à original
+
+               // Adicionar aresta reserva
+               grafo_r[j].push_back(i);
+               grafo_r[j].push_back(0);
+               grafo_r[j].push_back(0); // Sinaliza aresta reversa
+
+               int indiceReciprocaReversa = grafo_r[i].size() - 3;
+               grafo_r[j].push_back(indiceReciprocaReversa); // Lembra do índice da capacidade da aresta recíproca à reversa
+            }
+         }
+         else
+         {
+            if (j % 2 == 1)
+               continue;
+
+            int vertice = grafo[i][j];
+            grafo_r[i].push_back(vertice);
+            grafo_r[i].push_back(grafo[i][j + 1]);
+            grafo_r[i].push_back(1); // Sinaliza aresta original
+
+            int indiceReciprocaOriginal = grafo_r[vertice].size() + 1;
+            grafo_r[i].push_back(indiceReciprocaOriginal); // Lembra do índice da capacidade da aresta recíproca à original
 
             // Adicionar aresta reserva
-            grafo_r[j].push_back(i);
-            grafo_r[j].push_back(0);
+            grafo_r[vertice].push_back(i);
+            grafo_r[vertice].push_back(0);
+            grafo_r[vertice].push_back(0); // Sinaliza aresta reversa
+
+            int indiceReciprocaReversa = grafo_r[i].size() - 3;
+            grafo_r[vertice].push_back(indiceReciprocaReversa); // Lembra do índice da capacidade da aresta recíproca à reversa
          }
       }
    }
 
    // Encontrar caminho entre s e t no grafo residual (rodar uma BFS e achar o caminho)
-   vector<int> caminho = BFS_Ford_Fulkerson(grafo_r, source, target);
+   vector<pair<float *, float *>> caminho = BFS_Ford_Fulkerson(grafo_r, source, target);
 
    // Enquanto houver caminho:
    while (caminho.size() > 1)
    {
-      aumentar_fluxo(fluxo, grafo_r, caminho);
-
-      // Atualizar grafo residual
-      for (int i = 0; i < N; i++)
-      {
-         int len = grafo_r[i].size();
-         for (int j = 0; j < len; j++)
-         {  
-            if (j % 2 == 1) // Pula quando estivermos olhando para a capacidade da aresta
-               continue;
-            
-            int verticeVisto = grafo_r[i][j]; // Extrai qual vértice vizinho de i estamos analisando
-            float c = capacidade(i, verticeVisto); // Extrai a capacidade da aresta
-
-            if (c != INF)
-            {  
-               // Encontrar o fluxo entre essas arestas
-               int k = 0;
-               while (fluxo[i][k] != verticeVisto)
-               {
-                  k += 2;
-               }
-               
-               // Atualiza a aresta original
-               grafo_r[i][j + 1] = c - fluxo[i][k + 1];
-
-               // Atualiza aresta reversa
-               int l = 0;
-               while (grafo_r[verticeVisto][l] != i)
-               {
-                  l += 2;
-               }
-               grafo_r[verticeVisto][l + 1] = fluxo[i][k + 1];
-            }
-         }
-      }
+      aumentar_fluxo(caminho);
 
       // Encontrar novo caminho
       caminho = BFS_Ford_Fulkerson(grafo_r, source, target);
    }
 
-   ofstream file("Fluxo.txt");
-
-   file << endl << "Fluxo: " << endl;
-
-   for (int i = 0; i < N; i++)
+   if (armazenar)
    {
-      file << i << " ";
-      int len = fluxo[i].size();
-      for (int j = 0; j < len; j++)
+      ofstream file("Fluxo.txt");
+
+      // Colocar o fluxo num arquivo
+      for (int i = 0; i < N; i++)
       {
-         if (j % 2 == 0)
+         int len = grafo_r[i].size();
+         for (int j = 0; j < len; j += 4)
          {
-            file << "| ";
+            if (!grafo_r[i][j + 2])
+               continue;
+
+            int vertice = grafo_r[i][j];
+
+            file << "(" << i << "," << vertice << "): ";
+
+            int reciproca = grafo_r[i][j + 3];
+            int fluxo = grafo_r[vertice][reciproca];
+
+            file << fluxo << endl;
          }
-
-         file << fluxo[i][j] << " ";
       }
-
-      file << endl;
+      file.close();
    }
-
-   file.close();
 
    // Retornar fluxo máximo
    float fluxoMax = 0;
-   for (int i = 0; i < N; i++)
+   int len = grafo_r[target - 1].size();
+   for (int i = 0; i < len; i++)
    {
-      if (i % 2 == 0) // Pular quando fluxo[source - 1][i] for algum vértice vizinho de source
+      if (i % 4 != 1)
          continue;
 
-      fluxoMax += fluxo[source - 1][i];
+      fluxoMax += grafo_r[target - 1][i];
    }
 
    cout << "Fluxo máximo: " << fluxoMax << endl;
@@ -1221,13 +1216,13 @@ float ford_fulkerson(int source, int target)
    return fluxoMax;
 }
 
-vector<int> BFS_Ford_Fulkerson(vector<vector<float>> &grafo_r, int source, int target)
+vector<pair<float *, float *>> BFS_Ford_Fulkerson(vector<vector<float>> &grafo_r, int source, int target)
 {
    int raiz = source - 1;
 
    vector<bool> visitado(N, false);
 
-   vector<int> pai(N, -1);
+   vector<pair<int, float *>> pai(N, {-1, nullptr});
 
    visitado[raiz] = true;
 
@@ -1244,7 +1239,7 @@ vector<int> BFS_Ford_Fulkerson(vector<vector<float>> &grafo_r, int source, int t
       int len = grafo_r[verticeAtual].size();
       for (int i = 0; i < len; i++)
       {
-         if (i % 2 == 1) // Pula as vezes que olharíamos a capacidade da aresta
+         if (i % 4 != 0) // Pula as vezes que não olharíamos o vértice
             continue;
 
          // Pula se a capacidade da aresta é 0
@@ -1262,67 +1257,55 @@ vector<int> BFS_Ford_Fulkerson(vector<vector<float>> &grafo_r, int source, int t
             fila.push(verticeVisto);
 
             // Marca quem é o pai do vértice adicionado como o vértice atual
-            pai[verticeVisto] = verticeAtual;
+            pai[verticeVisto].first = verticeAtual;
+            pai[verticeVisto].second = &grafo_r[verticeAtual][i + 1];
          }
       }
    }
 
-   vector<int> caminho;
+   vector<pair<float *, float *>> caminho;
 
    int vertice = target - 1;
-   while (pai[vertice] != -1)
+   while (pai[vertice].first != -1)
    {
-      caminho.push_back(vertice);
-      vertice = pai[vertice];
-   }
+      float *reciproca = pai[vertice].second + 2;
 
-   // Se houver caminho, adicionar vértice source à ele
-   // Se não houver, adiciona o vértice target
-   caminho.push_back(vertice);
+      caminho.push_back({pai[vertice].second, &grafo_r[vertice][*reciproca]});
+      vertice = pai[vertice].first;
+   }
 
    return caminho;
 }
 
-void aumentar_fluxo(vector<vector<float>> &fluxo, vector<vector<float>> &grafo_r, vector<int> &caminho)
+void aumentar_fluxo(vector<pair<float *, float *>> &caminho)
 {
-   float g = gargalo(grafo_r, caminho);
-   int tamanho = caminho.size();
-   for (int i = tamanho - 1; i > 0; i--)
-   {
-      // Procurar pela aresta (caminho[i], caminho[i - 1]) no fluxo
-      int j = 0;
-      while (fluxo[caminho[i]][j] != caminho[i - 1])
-      {
-         j += 2;
-      }
+   float g = gargalo(caminho);
 
-      if (capacidade(caminho[i], caminho[i - 1]) != INF)
+   int tamanho = caminho.size();
+   for (int i = tamanho - 1; i > -1; i--)
+   {
+      float *original = caminho[i].first + 1;
+
+      if (&original)
       {
-         fluxo[caminho[i]][j + 1] += g;
+         *caminho[i].first -= g;
+         *caminho[i].second += g;
       }
       else
       {
-         fluxo[caminho[i]][j + 1] -= g;
+         *caminho[i].first += g;
+         *caminho[i].second -= g;
       }
    }
 }
 
-float gargalo(vector<vector<float>> &grafo_r, vector<int> &caminho)
+float gargalo(vector<pair<float *, float *>> &caminho)
 {
    int tamanho = caminho.size();
    float menorCapacidade = INF;
-   for (int i = tamanho - 1; i > 0; i--)
+   for (int i = tamanho - 1; i > -1; i--)
    {
-      // Procurar pela aresta (caminho[i], caminho[i - 1]) no grafo residual
-      int j = 0;
-      while (grafo_r[caminho[i]][j] != caminho[i - 1])
-      {
-         j += 2;
-      }
-
-      // Acessar sua capacidade atual
-      int capacidadeAtual = grafo_r[caminho[i]][j + 1];
-
+      float capacidadeAtual = *caminho[i].first;
       if (capacidadeAtual < menorCapacidade)
       {
          menorCapacidade = capacidadeAtual;
@@ -1330,28 +1313,4 @@ float gargalo(vector<vector<float>> &grafo_r, vector<int> &caminho)
    }
 
    return menorCapacidade;
-}
-
-float capacidade(int i, int j)
-{
-   // Uma função para encontrar a capacidade da aresta (i, j) no grafo
-   // Retorna INF se não houver aresta (i, j)
-   if (repr == MATRIZ)
-   {
-      return grafo[i][j];
-   }
-   else
-   {
-      // Busca pelo vértice no vetor de adjacência
-      int len = grafo[i].size();
-      for (int k = 0; k < len; k += 2)
-      {
-         if (grafo[i][k] == j)
-         {
-            return grafo[i][k + 1];
-         }
-      }
-      
-      return INF;
-   }
 }
