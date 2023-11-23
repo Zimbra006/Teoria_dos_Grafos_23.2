@@ -168,7 +168,7 @@ int main()
 
       cout << "Grafo " << i << ": a função levou " << duration.count() << " segundos." << endl;
    }
-   
+
 }
 
 void carregarValores(string path)
@@ -1169,8 +1169,6 @@ float ford_fulkerson(int source, int target, bool armazenar)
    while (caminho.size() > 1)
    {
       aumentar_fluxo(caminho);
-
-      // Encontrar novo caminho
       caminho = BFS_Ford_Fulkerson(grafo_r, source, target);
    }
 
@@ -1237,11 +1235,8 @@ vector<pair<float *, float *>> BFS_Ford_Fulkerson(vector<vector<float>> &grafo_r
 
       // Percorre os vizinhos do vértice atual
       int len = grafo_r[verticeAtual].size();
-      for (int i = 0; i < len; i++)
+      for (int i = 0; i < len; i += 4)
       {
-         if (i % 4 != 0) // Pula as vezes que não olharíamos o vértice
-            continue;
-
          // Pula se a capacidade da aresta é 0
          if (!grafo_r[verticeAtual][i + 1])
             continue;
